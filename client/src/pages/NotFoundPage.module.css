@@ -1,0 +1,48 @@
+/* src/pages/NotFoundPage.module.css */
+
+.page {
+    min-height: calc(100vh - 128px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.content {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+.panda {
+    font-size: 5rem;
+    display: block;
+    animation: wobble 2.5s ease-in-out infinite;
+}
+
+@keyframes wobble {
+
+    0%,
+    100% {
+        transform: rotate(-8deg);
+    }
+
+    50% {
+        transform: rotate(8deg);
+    }
+}
+
+.code {
+    font-size: 6rem;
+    font-weight: 800;
+    color: var(--accent);
+    letter-spacing: -4px;
+    line-height: 1;
+}
+
+.message {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+}

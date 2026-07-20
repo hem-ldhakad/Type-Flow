@@ -1,0 +1,56 @@
+/* src/components/ThemeToggle.module.css */
+
+.toggle {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+}
+
+.track {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 58px;
+    height: 30px;
+    border-radius: 99px;
+    padding: 3px;
+    transition: background 0.28s ease;
+    border: 1.5px solid var(--border);
+}
+
+.dark {
+    background: #22222a;
+}
+
+.light {
+    background: #e8e3db;
+}
+
+.thumb {
+    position: absolute;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 13px;
+    transition: transform 0.28s cubic-bezier(.4, 0, .2, 1), background 0.28s ease;
+    box-shadow: 0 1px 6px rgba(0, 0, 0, .3);
+}
+
+.dark .thumb {
+    background: var(--panda-bamboo);
+    transform: translateX(0px);
+    color: #fff;
+}
+
+.light .thumb {
+    background: #f0a030;
+    transform: translateX(28px);
+    color: #fff;
+}

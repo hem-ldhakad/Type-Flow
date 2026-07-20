@@ -1,0 +1,604 @@
+/* src/pages/RacePage.module.css */
+
+.page {
+    padding: 2rem 0 4rem;
+}
+
+.raceHeader {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+}
+
+.liveBadge {
+    margin-bottom: 0.4rem;
+    display: inline-flex;
+}
+
+.title {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    letter-spacing: -0.5px;
+}
+
+/* Progress card */
+.progressCard {
+    padding: 1.75rem;
+    margin-bottom: 1.25rem;
+}
+
+.sectionLabel {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 1.2rem;
+}
+
+.racer {
+    margin-bottom: 1.2rem;
+}
+
+.racer:last-child {
+    margin-bottom: 0;
+}
+
+.racerMeta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.4rem;
+}
+
+.racerName {
+    font-weight: 600;
+    font-size: 0.92rem;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.youBadge {
+    font-size: 0.7rem;
+}
+
+.racerWpm {
+    font-size: 0.85rem;
+    color: var(--accent);
+    font-weight: 600;
+}
+
+.bar {
+    position: relative;
+    width: 100%;
+    height: 12px;
+    background: var(--bg-hover);
+    border-radius: 99px;
+    overflow: visible;
+}
+
+.barFill {
+    height: 100%;
+    border-radius: 99px;
+    transition: width 0.4s ease;
+}
+
+.panda {
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 1.4rem;
+    transition: left 0.4s ease;
+    pointer-events: none;
+}
+
+/* Typing card */
+.typingCard {
+    padding: 1.75rem;
+}
+
+.paragraph {
+    font-size: 1.1rem;
+    line-height: 1.9;
+    color: var(--text-secondary);
+    font-family: 'JetBrains Mono', monospace;
+    margin-bottom: 1.25rem;
+    user-select: none;
+}
+
+.typingInput {
+    resize: none;
+    font-size: 1rem;
+    font-family: 'JetBrains Mono', monospace;
+    margin-bottom: 1rem;
+}
+
+.typingFooter {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+}
+
+.countdown strong {
+    color: var(--accent);
+}
+
+.liveStats {
+    display: flex;
+    gap: 1.5rem;
+}
+
+.liveStats strong {
+    color: var(--text-primary);
+}
+
+/* ── Loading and Error Pages ── */
+.connectionAlert {
+    background: var(--danger);
+    color: white;
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius-md);
+    margin-bottom: 1.5rem;
+    text-align: center;
+    font-weight: 700;
+    font-size: 0.9rem;
+    animation: pulseWarning 1.5s infinite alternate;
+}
+
+@keyframes pulseWarning {
+    from {
+        opacity: 0.85;
+        box-shadow: 0 0 8px rgba(239, 83, 80, 0.4);
+    }
+
+    to {
+        opacity: 1;
+        box-shadow: 0 0 16px rgba(239, 83, 80, 0.75);
+    }
+}
+
+.loadingPage,
+.errorPage {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 60vh;
+}
+
+.loadingWrapper {
+    text-align: center;
+}
+
+.loadingIcon {
+    font-size: 3rem;
+    display: inline-block;
+    animation: spin 2s linear infinite;
+    margin-bottom: 1rem;
+}
+
+.errorCard {
+    max-width: 400px;
+    text-align: center;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+/* ── Error Toast alert ── */
+.errorToast {
+    background: rgba(239, 83, 80, 0.1);
+    border: 1px solid var(--danger);
+    color: var(--danger);
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius-md);
+    margin-bottom: 1.25rem;
+    font-weight: 500;
+    font-size: 0.88rem;
+}
+
+/* ── Lobby Layout ── */
+.lobbyLayout {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+}
+
+@media (min-width: 992px) {
+    .lobbyLayout {
+        grid-template-columns: 2fr 1fr;
+    }
+}
+
+.lobbyCard {
+    padding: 2rem;
+}
+
+.lobbyCardHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.lobbyCardHeader h2 {
+    font-size: 1.35rem;
+    font-weight: 800;
+}
+
+.hostNotice {
+    font-size: 0.8rem;
+    color: var(--warning);
+    font-weight: 600;
+    background: rgba(245, 158, 11, 0.1);
+    padding: 0.25rem 0.6rem;
+    border-radius: var(--radius-sm);
+}
+
+.playerList {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 2rem;
+}
+
+.playerRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    transition: all 0.2s ease;
+}
+
+.playerRow:hover {
+    border-color: var(--accent);
+    background: var(--bg-hover);
+}
+
+.playerMeta {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--border);
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.9rem;
+}
+
+.playerName {
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.youTag {
+    font-size: 0.8rem;
+    font-weight: 400;
+    color: var(--text-muted);
+}
+
+.hostBadge {
+    font-size: 0.75rem;
+    background: rgba(245, 158, 11, 0.1);
+    color: var(--warning);
+    padding: 0.1rem 0.4rem;
+    border-radius: 4px;
+    font-weight: 600;
+}
+
+.playerState {
+    font-size: 0.88rem;
+}
+
+.readyBadge {
+    font-weight: 600;
+    color: var(--accent);
+    background: rgba(124, 184, 124, 0.12);
+    padding: 0.25rem 0.6rem;
+    border-radius: 4px;
+}
+
+.notReadyBadge {
+    font-weight: 500;
+    color: var(--text-muted);
+    background: var(--bg-hover);
+    padding: 0.25rem 0.6rem;
+    border-radius: 4px;
+}
+
+.lobbyActions {
+    display: flex;
+    justify-content: center;
+    border-top: 1px solid var(--border);
+    padding-top: 1.5rem;
+}
+
+.readyBtn {
+    min-width: 160px;
+}
+
+.waitingTip {
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+    text-align: center;
+    font-style: italic;
+}
+
+/* ── Countdown card ── */
+.countdownCard {
+    padding: 2rem;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--bg-card) 0%, rgba(124, 184, 124, 0.05) 100%);
+    border-color: var(--accent);
+}
+
+.countdownPanda {
+    font-size: 3rem;
+    animation: wobble 1s infinite alternate;
+}
+
+@keyframes wobble {
+    from {
+        transform: rotate(-5deg);
+    }
+
+    to {
+        transform: rotate(5deg);
+    }
+}
+
+.countdownSecs {
+    font-size: 4rem;
+    font-weight: 900;
+    color: var(--accent);
+    margin: 0.5rem 0;
+    line-height: 1;
+}
+
+.raceLayout {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+/* ── Character grid styles ── */
+.paragraphContainer {
+    font-size: 1.25rem;
+    line-height: 1.95;
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', 'Courier New', monospace;
+    margin-bottom: 1.5rem;
+    user-select: none;
+    word-break: break-word;
+    white-space: pre-wrap;
+}
+
+.charCorrect {
+    color: var(--accent);
+    border-bottom: 1px solid var(--accent);
+    transition: color 0.1s ease;
+}
+
+.charIncorrect {
+    color: var(--danger);
+    background: rgba(239, 83, 80, 0.18);
+    border-bottom: 2px solid var(--danger);
+}
+
+.charUpcoming {
+    color: var(--text-secondary);
+}
+
+/* Blinking Cursor Caret */
+.cursor {
+    position: relative;
+    background: rgba(124, 184, 124, 0.25);
+    border-left: 2px solid var(--accent);
+    animation: cursorBlink 1s step-end infinite;
+}
+
+@keyframes cursorBlink {
+
+    from,
+    to {
+        border-left-color: transparent;
+    }
+
+    50% {
+        border-left-color: var(--accent);
+    }
+}
+
+.finishedMarker {
+    font-size: 0.72rem;
+    background: rgba(124, 184, 124, 0.15);
+    color: var(--accent);
+    font-weight: 600;
+    padding: 0.1rem 0.4rem;
+    border-radius: 4px;
+}
+
+.racerContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+/* ── Game End / Results Screen ── */
+.completeLayout {
+    display: flex;
+    justify-content: center;
+    margin-top: 1rem;
+}
+
+.resultsCard {
+    width: 100%;
+    max-width: 680px;
+    padding: 2.5rem;
+    text-align: center;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+}
+
+.resultsHeader {
+    margin-bottom: 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.trophy {
+    font-size: 3.5rem;
+    line-height: 1;
+    animation: floatTrophy 2s ease-in-out infinite alternate;
+}
+
+@keyframes floatTrophy {
+    from {
+        transform: translateY(0);
+    }
+
+    to {
+        transform: translateY(-8px);
+    }
+}
+
+.resultsHeader h2 {
+    font-size: 1.8rem;
+    font-weight: 800;
+}
+
+.resultsHeader p {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+}
+
+.resultsTable {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 2rem;
+    text-align: left;
+}
+
+.resultsTable th {
+    padding: 0.8rem 1rem;
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    border-bottom: 2px solid var(--border);
+}
+
+.resultsTable td {
+    padding: 1rem;
+    font-size: 0.92rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.highlightRow {
+    background: rgba(124, 184, 124, 0.05);
+}
+
+.highlightRow td {
+    font-weight: 600;
+    color: var(--accent);
+}
+
+.tableYouTag {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    font-weight: 400;
+}
+
+.xpText {
+    color: var(--accent);
+    font-weight: 700;
+}
+
+.resultsActions {
+    display: flex;
+    justify-content: center;
+}
+
+/* Mode Selection Rules */
+.modeSection {
+    margin-top: 0.5rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    justify-content: center;
+}
+
+.modeTabs {
+    display: flex;
+    background: rgba(0, 0, 0, 0.05);
+    border: 1px solid var(--border);
+    padding: 5px;
+    border-radius: var(--radius-md);
+    gap: 5px;
+}
+
+.modeTab {
+    background: transparent;
+    border: none;
+    padding: 6px 16px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.modeTab:hover {
+    color: var(--text-primary);
+}
+
+.modeTabActive {
+    background: var(--accent);
+    color: white !important;
+}
+
+.modeStatusBanner {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    padding: 8px 18px;
+    border-radius: var(--radius-md);
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.waitingTip {
+    font-size: 0.88rem;
+    color: var(--text-muted);
+    text-align: center;
+    border: 1px dashed var(--border);
+    padding: 10px;
+    border-radius: var(--radius-sm);
+    margin-bottom: 1rem;
+    line-height: 1.4;
+}

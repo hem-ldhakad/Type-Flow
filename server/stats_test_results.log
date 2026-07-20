@@ -1,0 +1,17 @@
+[Verification]: Server booted on port 5004
+
+--- Test 1: Leveling Up and XP calculations ---
+Host ending state: Level 2 | XP 50
+Guest ending state: Level 1 | XP 60
+XP and leveling outcomes verified.
+
+--- Test 2: Paginated Match History Endpoint ---
+HTTP status: 200 | matches fetched: 1
+
+--- Test 3: User Statistics Aggregation API ---
+HTTP status: 200 | Total: 1 | Wins: 1 | PeakWpm: 0
+
+=========================================
+VERIFICATION COMPLETED: ALL OUTCOMES PASSED
+=========================================
+[Verification]: Tearing down sockets and server...
