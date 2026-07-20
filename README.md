@@ -1,6 +1,8 @@
 # TypeFlow
 
 TypeFlow is a full-stack typing practice application designed to help users improve their typing speed and accuracy through interactive typing tests. The application provides a clean user interface, secure user authentication, and tracks individual performance over time.
+<img width="1917" height="966" alt="image" src="https://github.com/user-attachments/assets/c31663a4-45b6-49ec-945d-45e139ba9663" />
+<img width="1917" height="971" alt="image" src="https://github.com/user-attachments/assets/ffed8a35-63b8-40b8-8538-afa7f2a94334" />
 
 ## Features
 
