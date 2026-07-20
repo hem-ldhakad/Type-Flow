@@ -1,0 +1,220 @@
+/* src/pages/ProfilePage.module.css */
+
+.page {
+    padding: 2.5rem 0 4rem;
+}
+
+.profileCard {
+    padding: 2rem;
+    margin-bottom: 1.5rem;
+}
+
+.avatarWrap {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.avatarBig {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, var(--accent), var(--blush));
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.4rem;
+    flex-shrink: 0;
+}
+
+.profileInfo {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+}
+
+.name {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    letter-spacing: -0.5px;
+}
+
+.badges {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.joined {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+/* Stats */
+.statsGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.statCard {
+    padding: 1.4rem;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+.statIcon {
+    font-size: 1.6rem;
+}
+
+.statVal {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: var(--accent);
+}
+
+.statLabel {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+/* History */
+.sectionTitle {
+    font-size: 1.15rem;
+    font-weight: 700;
+    margin-bottom: 0.9rem;
+    color: var(--text-primary);
+}
+
+.historyList {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.historyRow {
+    padding: 1rem 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.position {
+    font-size: 1.5rem;
+    min-width: 36px;
+}
+
+.historyStats {
+    flex: 1;
+    display: flex;
+    gap: 1.5rem;
+}
+
+.wpm,
+.acc {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.wpm small,
+.acc small {
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: var(--text-muted);
+}
+
+.date {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    text-align: right;
+}
+
+/* History meta row (date + word count) */
+.historyMeta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.2rem;
+}
+
+.wordCount {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+}
+
+/* Section title spacing */
+.sectionTitle {
+    margin-top: 2rem;
+}
+
+/* Empty history placeholder */
+.emptyHistory {
+    padding: 2.5rem;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.emptyHistory span {
+    font-size: 2.5rem;
+}
+
+/* Load more button area */
+.loadMoreWrap {
+    display: flex;
+    justify-content: center;
+    margin-top: 1.5rem;
+}
+
+/* Loading and error states */
+.loadingPage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 60vh;
+    gap: 1rem;
+    color: var(--text-secondary);
+}
+
+.loadingIcon {
+    font-size: 2.5rem;
+    animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.errorPage {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 60vh;
+}
+
+.errorCard {
+    max-width: 400px;
+    text-align: center;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}

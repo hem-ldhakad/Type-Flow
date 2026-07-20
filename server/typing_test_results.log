@@ -1,0 +1,52 @@
+[Verification]: Server booted on port 5003
+
+--- Test 1: Sockets Connection with JWT Handshake ---
+Sockets connected successfully.
+
+--- Test 2: Room join events ---
+Host joined room: TYPE1
+Guest joined room: TYPE1
+
+--- Test 3: Ready states and auto-countdown start ---
+Match started! Paragraph received: "hello world"
+
+--- Test 4: typing validation progress and accuracy tests ---
+Host typing correct prefix "hell"...
+Host progress: 36% | WPM: 0
+
+Guest typing typo "hellx" (should stop matching at "hell")...
+Guest accuracy tracked: 80% | progress: 36%
+
+--- Test 5: Completion detection and DB transaction saving ---
+Player finished broadcast: host_typer placed #1 with 0 WPM
+Player finished broadcast: guest_typer placed #2 with 0 WPM
+
+Match Ended: Game standings received.
+[
+  {
+    "userId": "user-h-1",
+    "username": "host_typer",
+    "wpm": 0,
+    "accuracy": 100,
+    "progress": 100,
+    "finishedAt": 1784556145544,
+    "finished": true,
+    "position": 1
+  },
+  {
+    "userId": "user-g-2",
+    "username": "guest_typer",
+    "wpm": 0,
+    "accuracy": 92,
+    "progress": 100,
+    "finishedAt": 1784556145545,
+    "finished": true,
+    "position": 2
+  }
+]
+Total matches saved: 1 | Results entries: 2
+
+=========================================
+VERIFICATION COMPLETED: ALL TYPING TESTS PASSED
+=========================================
+[Verification]: Cleaning up connections...

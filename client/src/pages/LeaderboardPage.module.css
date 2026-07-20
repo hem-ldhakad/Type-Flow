@@ -1,0 +1,280 @@
+/* src/pages/LeaderboardPage.module.css */
+
+.page {
+    padding: 2.5rem 0 5rem;
+}
+
+.header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1.25rem;
+    margin-bottom: 2rem;
+}
+
+.title {
+    font-size: 2rem;
+    font-weight: 900;
+    letter-spacing: -0.5px;
+}
+
+.sub {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    margin-top: 0.2rem;
+}
+
+/* ── Tab Toggle ── */
+.tabs {
+    display: flex;
+    gap: 0.5rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 0.3rem;
+}
+
+.tab {
+    padding: 0.55rem 1.1rem;
+    border-radius: var(--radius-md);
+    font-size: 0.88rem;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    background: transparent;
+    color: var(--text-secondary);
+    transition: all 0.2s ease;
+}
+
+.tab:hover {
+    color: var(--text-primary);
+    background: var(--bg-hover);
+}
+
+.tabActive {
+    background: var(--accent);
+    color: white !important;
+    box-shadow: 0 2px 8px rgba(124, 184, 124, 0.35);
+}
+
+/* ── Podium ── */
+.podium {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.podiumSlot {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 1.5rem 1.75rem 1.25rem;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    min-width: 140px;
+    text-align: center;
+    transition: transform 0.2s ease;
+}
+
+.podiumSlot:hover {
+    transform: translateY(-4px);
+}
+
+.podium1 {
+    order: 2;
+    padding-top: 2.5rem;
+    border-color: #f6c90e;
+    box-shadow: 0 0 20px rgba(246, 201, 14, 0.15);
+}
+
+.podium2 {
+    order: 1;
+    border-color: #c0c0c0;
+}
+
+.podium3 {
+    order: 3;
+    border-color: #cd7f32;
+}
+
+.podiumMedal {
+    font-size: 2rem;
+}
+
+.podiumName {
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--text-primary);
+    text-decoration: none;
+}
+
+.podiumName:hover {
+    color: var(--accent);
+}
+
+.podiumWpm {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--accent);
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.podiumLevel {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+}
+
+/* ── Main Table Card ── */
+.tableCard {
+    padding: 0;
+    overflow: hidden;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.92rem;
+}
+
+.table thead {
+    background: var(--bg-hover);
+}
+
+.table th {
+    padding: 0.9rem 1.2rem;
+    text-align: left;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--border);
+}
+
+.table td {
+    padding: 0.9rem 1.2rem;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-secondary);
+    vertical-align: middle;
+}
+
+.table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.table tbody tr:hover {
+    background: var(--bg-hover);
+}
+
+/* Gold / Silver / Bronze row tints */
+.top1 td {
+    background: rgba(246, 201, 14, 0.04);
+}
+
+.top2 td {
+    background: rgba(192, 192, 192, 0.04);
+}
+
+.top3 td {
+    background: rgba(205, 127, 50, 0.04);
+}
+
+/* Logged-in user highlight */
+.meRow td {
+    color: var(--accent) !important;
+    font-weight: 600;
+}
+
+.rankCell {
+    font-size: 1.15rem;
+    text-align: center;
+}
+
+.rankNum {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--text-muted);
+}
+
+.playerLink {
+    font-weight: 600;
+    color: var(--text-primary);
+    text-decoration: none;
+}
+
+.playerLink:hover {
+    color: var(--accent);
+}
+
+.youBadge {
+    font-size: 0.72rem;
+    background: rgba(124, 184, 124, 0.15);
+    color: var(--accent);
+    padding: 0.1rem 0.4rem;
+    border-radius: 4px;
+    margin-left: 0.5rem;
+    font-weight: 600;
+}
+
+.wpmCell,
+.peakCell {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    color: var(--accent);
+}
+
+/* ── Loading / Empty / Error States ── */
+.loadingState,
+.emptyState,
+.errorState {
+    padding: 3rem;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.loadingIcon {
+    font-size: 2.5rem;
+    animation: spin 2s linear infinite;
+}
+
+.emptyState span {
+    font-size: 3rem;
+}
+
+.errorState {
+    color: var(--danger);
+    font-weight: 500;
+}
+
+@media (max-width: 640px) {
+    .podium {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .podium1 {
+        order: 0;
+    }
+
+    .podium2 {
+        order: 1;
+    }
+
+    .podium3 {
+        order: 2;
+    }
+
+    .table th:nth-child(n+5),
+    .table td:nth-child(n+5) {
+        display: none;
+    }
+}

@@ -1,0 +1,27 @@
+[Verification]: Room API test server on port 5002
+
+--- Test 1: Create Room ---
+Status: 201 | "DORR07"
+
+--- Test 2: Invalid configDuration ---
+Status: 400 | configDuration must be one of: 15, 30, 60, 120.
+
+--- Test 3: Get Room ---
+Status: 200 | members: ["host_player"]
+
+--- Test 4: Join Room ---
+Status: 200 | members: ["host_player","guest_player"]
+
+--- Test 5: Join Invalid Code ---
+Status: 404 | Room with code 'XXXXXX' not found.
+
+--- Test 6: Leave Room (guest) ---
+Status: 200 | disbanded: false
+
+--- Test 7: Leave Room (host, disband) ---
+Status: 200 | disbanded: true
+
+=========================================
+VERIFICATION COMPLETED: ALL ROOM TESTS PASSED
+=========================================
+[Verification]: Shutting down...
