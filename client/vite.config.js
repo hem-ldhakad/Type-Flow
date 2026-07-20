@@ -34,8 +34,13 @@ export default defineConfig({
     // Proxy API requests to the dev backend to avoid CORS issues during development
     proxy: {
       '/api': {
-        target: 'http://localhost:5000',
+        target: 'http://localhost:5001',
         changeOrigin: true,
+      },
+      '/socket.io': {
+        target: 'http://localhost:5001',
+        changeOrigin: true,
+        ws: true,
       },
     },
   },
