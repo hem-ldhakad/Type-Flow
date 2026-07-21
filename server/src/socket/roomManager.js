@@ -216,7 +216,7 @@ export const updatePlayerProgress = (roomId, userId, typedText, totalKeystrokes)
     const accuracy = keystrokes > 0 ? Math.round((correctLength / keystrokes) * 100) : 100;
 
     // Progress percentage
-    const progress = Math.round((correctLength / paragraphLen) * 100);
+    const progress = Math.round((typedLen / paragraphLen) * 100);
 
     // Save to active socket user cache record
     member.progress = progress;

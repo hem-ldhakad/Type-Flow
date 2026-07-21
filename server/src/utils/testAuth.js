@@ -47,6 +47,15 @@ prisma.user.create = async (query) => {
     return newUser;
 };
 
+prisma.user.findThree = null; // Unused stub
+
+prisma.user.findMany = async (query) => {
+    if (query?.select?.password) {
+        return mockUsers.map(u => ({ password: u.password }));
+    }
+    return mockUsers;
+};
+
 import fs from 'fs';
 
 const PORT = 5001;
@@ -97,6 +106,24 @@ async function runTests() {
             log('Status: ' + regDupRes.status);
             log('Body: ' + JSON.stringify(regDupJson, null, 2));
             if (regDupRes.status !== 400 || regDupJson.success) throw new Error('Test 2 Failed');
+
+            // Test 7: Registration with Same Password
+            log('\n--- Test 7: Registration with Same Password ---');
+            const regSamePassRes = await fetch(`http://localhost:${PORT}/api/auth/register`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    username: 'another_coder',
+                    email: 'another@typeflow.com',
+                    password: 'securePassword123'
+                })
+            });
+            const regSamePassJson = await regSamePassRes.json();
+            log('Status: ' + regSamePassRes.status);
+            log('Body: ' + JSON.stringify(regSamePassJson, null, 2));
+            if (regSamePassRes.status !== 400 || regSamePassJson.success || !regSamePassJson.message.includes('password is already in use')) {
+                throw new Error('Test 7 Failed');
+            }
 
             // Test 3: Successful Login
             log('\n--- Test 3: Standard User Login ---');
