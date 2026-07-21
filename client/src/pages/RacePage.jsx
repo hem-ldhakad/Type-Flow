@@ -39,7 +39,9 @@ export default function RacePage() {
 
     // Standings results array
     const [matchResults, setMatchResults] = useState([]);
-    const [copied, setCopied] = useState(false);
+    const [copiedCode, setCopiedCode] = useState(false);
+    const [copiedLink, setCopiedLink] = useState(false);
+    const [showShareDropdown, setShowShareDropdown] = useState(false);
 
     // DOM Refs
     const inputRef = useRef(null);
@@ -61,11 +63,46 @@ export default function RacePage() {
         if (!dbRoom?.code) return;
         try {
             await navigator.clipboard.writeText(dbRoom.code);
-            setCopied(true);
-            setTimeout(() => setCopied(false), 2000);
+            setCopiedCode(true);
+            setTimeout(() => setCopiedCode(false), 2000);
         } catch (err) {
             console.error('Failed to copy code:', err);
         }
+    };
+
+    const handleCopyLink = async () => {
+        try {
+            await navigator.clipboard.writeText(`${window.location.origin}/race/${roomId}`);
+            setCopiedLink(true);
+            setTimeout(() => setCopiedLink(false), 2000);
+        } catch (err) {
+            console.error('Failed to copy link:', err);
+        }
+    };
+
+    const handleShareSocial = (platform) => {
+        if (!dbRoom?.code) return;
+        const msg = `Hey! Let's play a typing race on TypeFLOW. Join using Room Code: ${dbRoom.code}\n🔗 Invite Link: ${window.location.origin}/race/${roomId}`;
+        const encodedMsg = encodeURIComponent(msg);
+
+        let shareUrl = '';
+        switch (platform) {
+            case 'whatsapp':
+                shareUrl = `https://api.whatsapp.com/send?text=${encodedMsg}`;
+                break;
+            case 'telegram':
+                shareUrl = `https://t.me/share/url?url=${encodeURIComponent(`${window.location.origin}/race/${roomId}`)}&text=${encodeURIComponent(`Hey! Let's play a typing race on TypeFLOW. Join using Room Code: ${dbRoom.code}`)}`;
+                break;
+            case 'twitter':
+                shareUrl = `https://twitter.com/intent/tweet?text=${encodedMsg}`;
+                break;
+            case 'email':
+                shareUrl = `mailto:?subject=${encodeURIComponent('TypeFLOW Typing Race invite')}&body=${encodedMsg}`;
+                break;
+            default:
+                return;
+        }
+        window.open(shareUrl, '_blank');
     };
 
     // 2. Fetch room info from REST API database on mount
@@ -76,8 +113,22 @@ export default function RacePage() {
             try {
                 const res = await api.get(`/rooms/${roomId}`);
                 if (active && res.data?.success && res.data?.data?.room) {
-                    setDbRoom(res.data.data.room);
-                    setRoomStatus(res.data.data.room.status);
+                    let roomData = res.data.data.room;
+                    const isAlreadyMember = roomData.members.some(m => m.id === user?.id);
+                    if (!isAlreadyMember && roomData.status === 'LOBBY' && user?.id) {
+                        try {
+                            const joinRes = await api.post('/rooms/join', {
+                                code: roomData.code
+                            });
+                            if (joinRes.data?.success && joinRes.data?.data?.room) {
+                                roomData = joinRes.data.data.room;
+                            }
+                        } catch (joinErr) {
+                            console.warn('Auto-join on direct load failed:', joinErr.message);
+                        }
+                    }
+                    setDbRoom(roomData);
+                    setRoomStatus(roomData.status);
                 } else {
                     throw new Error('Room not valid.');
                 }
@@ -437,13 +488,37 @@ export default function RacePage() {
                         <h1 className={styles.title} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                             Room Code: <span className="code-font">{dbRoom?.code}</span>
                             {(roomStatus === 'LOBBY' || roomStatus === 'COUNTDOWN') && (
-                                <button
-                                    onClick={handleCopyCode}
-                                    className={styles.shareBtn}
-                                    title="Copy Room Code"
-                                >
-                                    {copied ? 'Copied! ✓' : 'Copy Code 📋'}
-                                </button>
+                                <div className={styles.shareWrapper}>
+                                    <button
+                                        onClick={() => setShowShareDropdown(!showShareDropdown)}
+                                        className={styles.shareTriggerBtn}
+                                        title="Invite Competitors"
+                                    >
+                                        Invite & Share 👥
+                                    </button>
+                                    {showShareDropdown && (
+                                        <div className={styles.shareDropdown}>
+                                            <button onClick={handleCopyCode} className={styles.dropdownItem}>
+                                                {copiedCode ? 'Copied Code! ✓' : '📋 Copy Code'}
+                                            </button>
+                                            <button onClick={handleCopyLink} className={styles.dropdownItem}>
+                                                {copiedLink ? 'Copied Link! ✓' : '🔗 Copy Invite Link'}
+                                            </button>
+                                            <button onClick={() => handleShareSocial('whatsapp')} className={`${styles.dropdownItem} ${styles.dropdownWa}`}>
+                                                🟢 Share on WhatsApp
+                                            </button>
+                                            <button onClick={() => handleShareSocial('telegram')} className={`${styles.dropdownItem} ${styles.dropdownTg}`}>
+                                                ✈️ Share on Telegram
+                                            </button>
+                                            <button onClick={() => handleShareSocial('twitter')} className={`${styles.dropdownItem} ${styles.dropdownTw}`}>
+                                                🐦 Share on Twitter / X
+                                            </button>
+                                            <button onClick={() => handleShareSocial('email')} className={styles.dropdownItem}>
+                                                ✉️ Share via Email
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
                             )}
                         </h1>
                     </div>

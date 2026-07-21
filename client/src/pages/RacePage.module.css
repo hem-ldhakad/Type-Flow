@@ -603,28 +603,87 @@
     line-height: 1.4;
 }
 
-.shareBtn {
-    padding: 0.25rem 0.6rem;
-    font-size: 0.82rem;
+.shareWrapper {
+    position: relative;
+    display: inline-block;
+}
+
+.shareTriggerBtn {
+    padding: 0.35rem 0.75rem;
+    font-size: 0.85rem;
     font-weight: 600;
     color: var(--accent);
     background: rgba(124, 184, 124, 0.1);
     border: 1px solid rgba(124, 184, 124, 0.25);
     border-radius: var(--radius-sm);
-    display: inline-flex;
-    align-items: center;
-    gap: 0.3rem;
     cursor: pointer;
     transition: all 0.2s ease;
 }
 
-.shareBtn:hover {
+.shareTriggerBtn:hover {
     background: var(--accent);
     color: white;
     border-color: var(--accent);
-    transform: translateY(-1px);
 }
 
-.shareBtn:active {
-    transform: translateY(0);
+.shareDropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    z-index: 100;
+    min-width: 190px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    padding: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    animation: dropdownFadeIn 0.15s ease-out;
+}
+
+@keyframes dropdownFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.dropdownItem {
+    width: 100%;
+    text-align: left;
+    background: transparent;
+    border: none;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.dropdownItem:hover {
+    background: var(--bg-hover);
+}
+
+.dropdownWa:hover {
+    background: rgba(37, 211, 102, 0.1);
+    color: #25d366;
+}
+
+.dropdownTg:hover {
+    background: rgba(0, 136, 204, 0.1);
+    color: #0088cc;
+}
+
+.dropdownTw:hover {
+    background: rgba(29, 161, 242, 0.1);
+    color: #1da1f2;
 }
