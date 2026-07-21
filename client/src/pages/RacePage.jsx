@@ -326,17 +326,15 @@ export default function RacePage() {
 
             // Live metrics calculations
             setTypedText((currText) => {
-                let correctPrefix = 0;
+                let correctCount = 0;
                 for (let i = 0; i < currText.length; i++) {
                     if (currText[i] === paragraph[i]) {
-                        correctPrefix++;
-                    } else {
-                        break;
+                        correctCount++;
                     }
                 }
 
                 if (seconds > 0.5) {
-                    const wpm = Math.round((correctPrefix / 5) / (seconds / 60));
+                    const wpm = Math.round((correctCount / 5) / (seconds / 60));
                     setLocalWpm(wpm);
                 }
                 return currText;
@@ -368,20 +366,18 @@ export default function RacePage() {
 
         setTypedText(val);
 
-        // Calculate correct length
-        let correctLen = 0;
+        // Calculate correct characters count
+        let correctCount = 0;
         for (let i = 0; i < val.length; i++) {
             if (val[i] === paragraph[i]) {
-                correctLen++;
-            } else {
-                break;
+                correctCount++;
             }
         }
 
         // Live accuracy update
         setTotalKeystrokes((prevKeys) => {
-            const nextKeys = Math.max(prevKeys, correctLen);
-            const acc = nextKeys > 0 ? Math.round((correctLen / nextKeys) * 100) : 100;
+            const nextKeys = Math.max(prevKeys, correctCount);
+            const acc = nextKeys > 0 ? Math.round((correctCount / nextKeys) * 100) : 100;
             setLocalAcc(acc);
 
             // Emit events to socket
