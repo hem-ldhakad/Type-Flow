@@ -406,22 +406,14 @@ export default function RacePage() {
     const renderParagraph = () => {
         if (!paragraph) return null;
 
-        // Determine correct typed prefix boundary
-        let correctLen = 0;
-        for (let i = 0; i < typedText.length; i++) {
-            if (typedText[i] === paragraph[i]) {
-                correctLen++;
-            } else {
-                break;
-            }
-        }
-
         return paragraph.split('').map((char, index) => {
             let charClass = styles.charUpcoming;
-            if (index < correctLen) {
-                charClass = styles.charCorrect;
-            } else if (index < typedText.length) {
-                charClass = styles.charIncorrect;
+            if (index < typedText.length) {
+                if (typedText[index] === paragraph[index]) {
+                    charClass = styles.charCorrect;
+                } else {
+                    charClass = styles.charIncorrect;
+                }
             }
 
             const isCursor = index === typedText.length;
