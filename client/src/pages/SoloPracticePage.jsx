@@ -109,18 +109,16 @@ export default function SoloPracticePage() {
             const secondIndex = Math.max(1, Math.floor(seconds));
 
             setTypedText((currText) => {
-                let correctPrefix = 0;
+                let correctCount = 0;
                 for (let i = 0; i < currText.length; i++) {
                     if (currText[i] === paragraph[i]) {
-                        correctPrefix++;
-                    } else {
-                        break;
+                        correctCount++;
                     }
                 }
 
                 let currentWpm = 0;
                 if (seconds > 0.5) {
-                    currentWpm = Math.round((correctPrefix / 5) / (seconds / 60));
+                    currentWpm = Math.round((correctCount / 5) / (seconds / 60));
                     setLocalWpm(currentWpm);
                 }
 
@@ -149,27 +147,25 @@ export default function SoloPracticePage() {
 
         setTypedText(val);
 
-        // Calculate correct length
-        let correctLen = 0;
+        // Calculate total correct matching characters count
+        let correctCount = 0;
         for (let i = 0; i < val.length; i++) {
             if (val[i] === paragraph[i]) {
-                correctLen++;
-            } else {
-                break;
+                correctCount++;
             }
         }
 
         // Live accuracy update
         setTotalKeystrokes((prevKeys) => {
-            const nextKeys = Math.max(prevKeys, correctLen);
-            const acc = nextKeys > 0 ? Math.round((correctLen / nextKeys) * 100) : 100;
+            const nextKeys = Math.max(prevKeys, correctCount);
+            const acc = nextKeys > 0 ? Math.round((correctCount / nextKeys) * 100) : 100;
             setLocalAcc(acc);
             return prevKeys;
         });
 
-        // Check for finish (entire paragraph typed correctly)
-        if (correctLen === paragraph.length) {
-            finishMatch(correctLen);
+        // Check for finish when user has typed the full length of the paragraph
+        if (val.length === paragraph.length) {
+            finishMatch(correctCount);
         }
     };
 

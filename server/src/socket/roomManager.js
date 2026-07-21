@@ -190,7 +190,7 @@ export const updatePlayerProgress = (roomId, userId, typedText, totalKeystrokes)
     const paragraph = room.paragraphText;
     const paragraphLen = paragraph.length;
 
-    // Authoritative prefix matching
+    // Count total correct characters matching paragraph at that index
     let correctLength = 0;
     const typedLen = typedText.length;
     const maxMatch = Math.min(typedLen, paragraphLen);
@@ -198,8 +198,6 @@ export const updatePlayerProgress = (roomId, userId, typedText, totalKeystrokes)
     for (let i = 0; i < maxMatch; i++) {
         if (typedText[i] === paragraph[i]) {
             correctLength++;
-        } else {
-            break;
         }
     }
 
@@ -233,7 +231,7 @@ export const updatePlayerProgress = (roomId, userId, typedText, totalKeystrokes)
         member.wpmHistory.push(wpm);
     }
 
-    if (correctLength === paragraphLen) {
+    if (typedLen === paragraphLen) {
         member.finished = true;
         member.finishedAt = Date.now();
         member.wpmHistory[secondIndex] = wpm; // ensure final WPM is correct
