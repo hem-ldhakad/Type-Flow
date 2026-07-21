@@ -602,3 +602,29 @@
     margin-bottom: 1rem;
     line-height: 1.4;
 }
+
+.shareBtn {
+    padding: 0.25rem 0.6rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--accent);
+    background: rgba(124, 184, 124, 0.1);
+    border: 1px solid rgba(124, 184, 124, 0.25);
+    border-radius: var(--radius-sm);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.shareBtn:hover {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+    transform: translateY(-1px);
+}
+
+.shareBtn:active {
+    transform: translateY(0);
+}
