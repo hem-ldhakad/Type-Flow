@@ -25,7 +25,7 @@ const saveMatchResults = async (roomId, room) => {
                     accuracy: player.accuracy,
                     position: player.position,
                     wpmHistory: JSON.stringify(player.wpmHistory || []),      // Save the actual WPM history array
-                    keystrokeHistory: '[]' // Fallback structural placeholders for SQLite string
+                    keystrokeHistory: '[]' // Empty JSON array placeholder
                 }
             });
 
