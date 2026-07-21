@@ -39,6 +39,7 @@ export default function RacePage() {
 
     // Standings results array
     const [matchResults, setMatchResults] = useState([]);
+    const [copied, setCopied] = useState(false);
 
     // DOM Refs
     const inputRef = useRef(null);
@@ -55,6 +56,17 @@ export default function RacePage() {
             navigate('/dashboard', { replace: true });
         }
     }, [roomId, emit, navigate]);
+
+    const handleCopyCode = async () => {
+        if (!dbRoom?.code) return;
+        try {
+            await navigator.clipboard.writeText(dbRoom.code);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        } catch (err) {
+            console.error('Failed to copy code:', err);
+        }
+    };
 
     // 2. Fetch room info from REST API database on mount
     useEffect(() => {
@@ -422,8 +434,17 @@ export default function RacePage() {
                             {roomStatus === 'RACING' && '🏁 RACING'}
                             {roomStatus === 'COMPLETE' && '🥇 COMPLETE'}
                         </span>
-                        <h1 className={styles.title}>
+                        <h1 className={styles.title} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                             Room Code: <span className="code-font">{dbRoom?.code}</span>
+                            {(roomStatus === 'LOBBY' || roomStatus === 'COUNTDOWN') && (
+                                <button
+                                    onClick={handleCopyCode}
+                                    className={styles.shareBtn}
+                                    title="Copy Room Code"
+                                >
+                                    {copied ? 'Copied! ✓' : 'Copy Code 📋'}
+                                </button>
+                            )}
                         </h1>
                     </div>
                     <button onClick={handleLeaveRoom} className="btn btn-ghost">
