@@ -36,6 +36,17 @@ export const createUser = async ({ username, email, password }) => {
         throw error;
     }
 
+    // Verify password uniqueness across all accounts
+    const allUsers = await prisma.user.findMany({ select: { password: true } });
+    for (const u of allUsers) {
+        const isMatch = await bcrypt.compare(password, u.password);
+        if (isMatch) {
+            const error = new Error('This password is already in use by another user.');
+            error.status = 400;
+            throw error;
+        }
+    }
+
     // Hash target user password
     const hashedPassword = await bcrypt.hash(password, 10);
 
