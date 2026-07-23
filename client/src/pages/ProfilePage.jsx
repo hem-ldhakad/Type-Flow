@@ -1,6 +1,6 @@
 // src/pages/ProfilePage.jsx
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import api from '../api/axios';
 import styles from './ProfilePage.module.css';
@@ -19,7 +19,8 @@ const PAGE_SIZE = 10;
 
 export default function ProfilePage() {
     const { userId } = useParams();
-    const { user: me } = useAuth();
+    const { user: me, logout } = useAuth();
+    const navigate = useNavigate();
     const isOwnProfile = me?.id === userId;
 
     const [profile, setProfile] = useState(null);
@@ -29,6 +30,24 @@ export default function ProfilePage() {
     const [loadingProfile, setLoadingProfile] = useState(true);
     const [loadingMatches, setLoadingMatches] = useState(false);
     const [error, setError] = useState('');
+
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [deleteError, setDeleteError] = useState('');
+
+    const handleDeleteAccount = async () => {
+        setIsDeleting(true);
+        setDeleteError('');
+        try {
+            await api.delete(`/users/${userId}`);
+            logout();
+            navigate('/', { replace: true });
+        } catch (err) {
+            setDeleteError(err.response?.data?.message || 'Failed to delete account.');
+        } finally {
+            setIsDeleting(false);
+        }
+    };
 
     // Fetch profile stats from the backend
     useEffect(() => {
@@ -103,21 +122,33 @@ export default function ProfilePage() {
             <div className="container">
                 {/* Profile header */}
                 <div className={`card ${styles.profileCard}`}>
-                    <div className={styles.avatarWrap}>
-                        <div className={styles.avatarBig}>🐼</div>
-                        <div className={styles.profileInfo}>
-                            <h1 className={styles.name}>{profile?.username}</h1>
-                            <div className={styles.badges}>
-                                <span className="badge badge-green">Level {profile?.level}</span>
-                                <span className="badge badge-muted">🎋 {profile?.xp} XP</span>
-                                {isOwnProfile && <span className="badge badge-pink">You</span>}
+                    <div className={styles.profileHeaderFlex}>
+                        <div className={styles.avatarWrap}>
+                            <div className={styles.avatarBig}>🐼</div>
+                            <div className={styles.profileInfo}>
+                                <h1 className={styles.name}>{profile?.username}</h1>
+                                <div className={styles.badges}>
+                                    <span className="badge badge-green">Level {profile?.level}</span>
+                                    <span className="badge badge-muted">🎋 {profile?.xp} XP</span>
+                                    {isOwnProfile && <span className="badge badge-pink">You</span>}
+                                </div>
+                                <p className={styles.joined}>
+                                    Member since {profile?.joinedAt
+                                        ? new Date(profile.joinedAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+                                        : '—'}
+                                </p>
                             </div>
-                            <p className={styles.joined}>
-                                Member since {profile?.joinedAt
-                                    ? new Date(profile.joinedAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
-                                    : '—'}
-                            </p>
                         </div>
+                        {isOwnProfile && (
+                            <div>
+                                <button
+                                    onClick={() => setShowDeleteConfirm(true)}
+                                    className="btn btn-danger"
+                                >
+                                    Delete Account
+                                </button>
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -187,6 +218,39 @@ export default function ProfilePage() {
                     </>
                 )}
             </div>
+
+            {/* Delete Account Modal Confirmation Overlay */}
+            {showDeleteConfirm && (
+                <div className={styles.modalOverlay} onClick={() => !isDeleting && setShowDeleteConfirm(false)}>
+                    <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+                        <h3 className={styles.modalTitle}>⚠️ Delete Account?</h3>
+                        <p className={styles.modalText}>
+                            Are you absolutely sure you want to delete your account? This action is permanent and will cascade delete all your race statistics, levels, XP history, and results.
+                        </p>
+                        {deleteError && (
+                            <div style={{ color: 'var(--danger)', fontSize: '0.85rem' }}>
+                                {deleteError}
+                            </div>
+                        )}
+                        <div className={styles.modalActions}>
+                            <button
+                                className="btn btn-ghost"
+                                onClick={() => setShowDeleteConfirm(false)}
+                                disabled={isDeleting}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                className="btn btn-danger"
+                                onClick={handleDeleteAccount}
+                                disabled={isDeleting}
+                            >
+                                {isDeleting ? 'Deleting…' : 'Delete Permanently 🐼'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

@@ -1,0 +1,91 @@
+[Verification]: Test server running on port 5001
+
+--- Test 1: Registering User ---
+Status: 201
+Body: {
+  "success": true,
+  "message": "Registration successful.",
+  "data": {
+    "user": {
+      "id": "mock-id-1784829265456",
+      "username": "test_coder",
+      "email": "coder@typeflow.com",
+      "xp": 0,
+      "level": 1,
+      "createdAt": "2026-07-23T17:54:25.456Z"
+    },
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Im1vY2staWQtMTc4NDgyOTI2NTQ1NiIsInVzZXJuYW1lIjoidGVzdF9jb2RlciIsImlhdCI6MTc4NDgyOTI2NSwiZXhwIjoxNzg0OTE1NjY1fQ.lmYKWzPtnCVPO4mJiw2FuT7FXu9G85dGu4Ldyo5kFjI"
+  }
+}
+
+--- Test 2: Duplicate Registration Error ---
+Status: 400
+Body: {
+  "success": false,
+  "message": "Email is already registered.",
+  "stack": "Error: Email is already registered.\n    at Module.createUser (file:///C:/Users/hemal/OneDrive/Desktop/TypeFLOW/server/src/services/authService.js:34:23)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async register (file:///C:/Users/hemal/OneDrive/Desktop/TypeFLOW/server/src/controllers/authController.js:6:24)"
+}
+
+--- Test 7: Registration with Same Password ---
+Status: 400
+Body: {
+  "success": false,
+  "message": "This password is already in use by another user.",
+  "stack": "Error: This password is already in use by another user.\n    at Module.createUser (file:///C:/Users/hemal/OneDrive/Desktop/TypeFLOW/server/src/services/authService.js:44:27)\n    at async register (file:///C:/Users/hemal/OneDrive/Desktop/TypeFLOW/server/src/controllers/authController.js:6:24)"
+}
+
+--- Test 3: Standard User Login ---
+Status: 200
+Body: {
+  "success": true,
+  "message": "Login successful.",
+  "data": {
+    "user": {
+      "id": "mock-id-1784829265456",
+      "username": "test_coder",
+      "email": "coder@typeflow.com",
+      "xp": 0,
+      "level": 1,
+      "createdAt": "2026-07-23T17:54:25.456Z"
+    },
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Im1vY2staWQtMTc4NDgyOTI2NTQ1NiIsInVzZXJuYW1lIjoidGVzdF9jb2RlciIsImlhdCI6MTc4NDgyOTI2NSwiZXhwIjoxNzg0OTE1NjY1fQ.lmYKWzPtnCVPO4mJiw2FuT7FXu9G85dGu4Ldyo5kFjI"
+  }
+}
+
+--- Test 4: Failed Login Incorrect Credentials ---
+Status: 401
+Body: {
+  "success": false,
+  "message": "Invalid email or password.",
+  "stack": "Error: Invalid email or password.\n    at Module.authenticateUser (file:///C:/Users/hemal/OneDrive/Desktop/TypeFLOW/server/src/services/authService.js:81:23)\n    at async login (file:///C:/Users/hemal/OneDrive/Desktop/TypeFLOW/server/src/controllers/authController.js:21:24)"
+}
+
+--- Test 5: Profile Request with Valid Token ---
+Status: 200
+Body: {
+  "success": true,
+  "message": "Profile retrieved successfully.",
+  "data": {
+    "user": {
+      "id": "mock-id-1784829265456",
+      "username": "test_coder",
+      "email": "coder@typeflow.com",
+      "xp": 0,
+      "level": 1,
+      "createdAt": "2026-07-23T17:54:25.456Z"
+    }
+  }
+}
+
+--- Test 6: Profile Request with Faked Token ---
+Status: 401
+Body: {
+  "success": false,
+  "message": "Session key invalid or expired.",
+  "stack": "Error: Session key invalid or expired.\n    at authRequired (file:///C:/Users/hemal/OneDrive/Desktop/TypeFLOW/server/src/middlewares/auth.js:22:27)\n    at Layer.handle [as handle_request] (C:\\Users\\hemal\\OneDrive\\Desktop\\TypeFLOW\\server\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at next (C:\\Users\\hemal\\OneDrive\\Desktop\\TypeFLOW\\server\\node_modules\\express\\lib\\router\\route.js:149:13)\n    at Route.dispatch (C:\\Users\\hemal\\OneDrive\\Desktop\\TypeFLOW\\server\\node_modules\\express\\lib\\router\\route.js:119:3)\n    at Layer.handle [as handle_request] (C:\\Users\\hemal\\OneDrive\\Desktop\\TypeFLOW\\server\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at C:\\Users\\hemal\\OneDrive\\Desktop\\TypeFLOW\\server\\node_modules\\express\\lib\\router\\index.js:284:15\n    at router.process_params (C:\\Users\\hemal\\OneDrive\\Desktop\\TypeFLOW\\server\\node_modules\\express\\lib\\router\\index.js:346:12)\n    at next (C:\\Users\\hemal\\OneDrive\\Desktop\\TypeFLOW\\server\\node_modules\\express\\lib\\router\\index.js:280:10)\n    at router.handle (C:\\Users\\hemal\\OneDrive\\Desktop\\TypeFLOW\\server\\node_modules\\express\\lib\\router\\index.js:175:3)\n    at router (C:\\Users\\hemal\\OneDrive\\Desktop\\TypeFLOW\\server\\node_modules\\express\\lib\\router\\index.js:47:12)"
+}
+
+=========================================
+VERIFICATION COMPLETED: ALL AUTH TESTS PASSED
+=========================================
+[Verification]: Shutting down test server...

@@ -130,6 +130,14 @@
     margin-top: 0.25rem;
 }
 
+.passwordUniqueWarning {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin-top: 0.25rem;
+    display: block;
+    line-height: 1.3;
+}
+
 /* Input border error state */
 .inputError {
     border-color: var(--danger) !important;
