@@ -138,3 +138,34 @@ export const getLeaderboard = async (req, res, next) => {
         next(err);
     }
 };
+
+/**
+ * DELETE /api/users/:id
+ * Deletes user account and cascades all related data.
+ */
+export const deleteUser = async (req, res, next) => {
+    try {
+        const { id: targetUserId } = req.params;
+
+        // Ensure user is deleting their own account
+        if (req.user.id !== targetUserId) {
+            return res.status(403).json({
+                success: false,
+                message: 'You are not authorized to delete this account.'
+            });
+        }
+
+        // Delete user
+        await prisma.user.delete({
+            where: { id: targetUserId }
+        });
+
+        return res.status(200).json({
+            success: true,
+            message: 'Account deleted successfully.'
+        });
+    } catch (err) {
+        next(err);
+    }
+};
+
