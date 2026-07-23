@@ -41,31 +41,50 @@ export default function SoloPracticePage() {
     const inputRef = useRef(null);
 
     // 1. Fetch a random paragraph depending on wordCount selection
+    const fetchParagraph = useCallback(async () => {
+        setStage('LOADING');
+        setErrorMsg('');
+        try {
+            const res = await api.get(`/matches/paragraph/random?wordCount=${selectedWordCount}`);
+            if (res.data?.success && res.data?.data?.paragraph) {
+                const p = res.data.data.paragraph;
+                setParagraph(p.content || p.text || '');
+                setParagraphId(p.id);
+                setStage('READY');
+            } else {
+                throw new Error('No paragraphs available.');
+            }
+        } catch (err) {
+            setErrorMsg(err.response?.data?.message || err.message || 'Failed to load paragraph.');
+        }
+    }, [selectedWordCount]);
+
     useEffect(() => {
         let active = true;
 
-        const fetchParagraph = async () => {
-            setStage('LOADING');
-            try {
-                const res = await api.get(`/matches/paragraph/random?wordCount=${selectedWordCount}`);
-                if (active && res.data?.success && res.data?.data?.paragraph) {
-                    const p = res.data.data.paragraph;
-                    setParagraph(p.content || p.text || '');
-                    setParagraphId(p.id);
-                    setStage('READY');
-                } else {
-                    throw new Error('No paragraphs available.');
-                }
-            } catch (err) {
-                if (active) {
-                    setErrorMsg(err.response?.data?.message || err.message || 'Failed to load paragraph.');
-                }
+        const initLoad = async () => {
+            if (active) {
+                await fetchParagraph();
             }
         };
+        initLoad();
 
-        fetchParagraph();
         return () => { active = false; };
-    }, [selectedWordCount]);
+    }, [fetchParagraph]);
+
+    // Handle Practice Again state reset
+    const handlePracticeAgain = useCallback(() => {
+        setTypedText('');
+        setTotalKeystrokes(0);
+        setMatchStartTime(null);
+        setElapsedTime(0);
+        setLocalWpm(0);
+        setLocalAcc(100);
+        setWpmHistory([0]);
+        setCountdownSecs(3);
+        setResult(null);
+        fetchParagraph();
+    }, [fetchParagraph]);
 
     // 2. Countdown timer
     const startCountdown = useCallback(() => {
@@ -505,7 +524,7 @@ export default function SoloPracticePage() {
                                 {/* Action Buttons */}
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                                     <button
-                                        onClick={() => window.location.reload()}
+                                        onClick={handlePracticeAgain}
                                         className="btn btn-primary"
                                         style={{ width: '100%', justifyContent: 'center' }}
                                     >
