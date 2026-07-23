@@ -134,6 +134,9 @@ export default function RegisterPage() {
                             onChange={handleChange}
                             disabled={loading}
                         />
+                        <span className={styles.passwordUniqueWarning}>
+                            ⚠️ For security, your password must be unique and cannot match other users&apos; passwords.
+                        </span>
                         {form.password && (
                             <div className={styles.strengthWrap} aria-label={`Password strength: ${strength.label}`}>
                                 {[1, 2, 3].map((n) => (
