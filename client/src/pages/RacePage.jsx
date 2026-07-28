@@ -225,13 +225,7 @@ export default function RacePage() {
         const handleGameStart = (payload) => {
             console.log('[Socket] game-start:', payload);
             setRoomStatus('RACING');
-            let text = payload.paragraphText || '';
-            if (text) {
-                let lowered = text.toLowerCase();
-                text = lowered.replace(/(^\s*|[.!?]\s+)([a-z])/g, (match, separator, letter) => separator + letter.toUpperCase());
-                text = text.replace(/\b(i|i'm)\b/g, (match) => match.charAt(0).toUpperCase() + match.slice(1));
-            }
-            setParagraph(text);
+            setParagraph(payload.paragraphText || '');
             setParagraphId(payload.paragraphId);
             setCountdownSecs(null);
             setTypedText('');

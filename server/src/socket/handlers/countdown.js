@@ -36,14 +36,22 @@ export const startCountdown = (io, roomId) => {
             // Pick a paragraph matching the room configuration
             const paragraph = await generateParagraph(wordCount);
 
+            // Apply sentence-case formatting to ensure both server and client agree on the exact same text
+            let paragraphText = paragraph.text || '';
+            if (paragraphText) {
+                let lowered = paragraphText.toLowerCase();
+                paragraphText = lowered.replace(/(^\s*|[.!?]\s+)([a-z])/g, (match, separator, letter) => separator + letter.toUpperCase());
+                paragraphText = paragraphText.replace(/\b(i|i'm)\b/g, (match) => match.charAt(0).toUpperCase() + match.slice(1));
+            }
+
             // Countdown completed — transition to RACING and initialize race state
             clearInterval(timer);
             roomManager.setCountdownTimer(roomId, null);
-            roomManager.startRace(roomId, paragraph.id, paragraph.text);
+            roomManager.startRace(roomId, paragraph.id, paragraphText);
 
             io.to(roomId).emit('game-start', {
                 paragraphId: paragraph.id,
-                paragraphText: paragraph.text
+                paragraphText
             });
 
             console.log(`[Socket]: Game started in room ${roomId} with paragraph ${paragraph.id}`);
