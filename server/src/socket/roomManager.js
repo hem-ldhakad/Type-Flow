@@ -204,17 +204,9 @@ export const updatePlayerProgress = (roomId, userId, typedText, totalKeystrokes)
 
     // Prevent impossible keystroke entries (total must be >= correct length)
     const keystrokes = Math.max(totalKeystrokes || 0, correctLength);
-
-    // Calculate elapsed duration
     const elapsed = (Date.now() - room.matchStartedAt) / 1000;
-
-    // WPM definition: 5 character blocks divided by minutes
     const wpm = elapsed > 0.5 ? Math.round((correctLength / 5) / (elapsed / 60)) : 0;
-
-    // Accuracy calculation %
     const accuracy = keystrokes > 0 ? Math.round((correctLength / keystrokes) * 100) : 100;
-
-    // Progress percentage
     const progress = Math.round((typedLen / paragraphLen) * 100);
 
     // Save to active socket user cache record
@@ -223,16 +215,15 @@ export const updatePlayerProgress = (roomId, userId, typedText, totalKeystrokes)
     member.accuracy = accuracy;
     member.totalKeystrokes = keystrokes;
 
-    // Track WPM history second by second
+    console.log(`[Socket][DEBUG] Player ${member.username} stats: typedLen=${typedLen}, correct=${correctLength}, progress=${progress}%, WPM=${wpm}`);
+
     const secondIndex = Math.max(1, Math.floor(elapsed));
-    if (!member.wpmHistory) {
-        member.wpmHistory = [0];
-    }
+    if (!member.wpmHistory) member.wpmHistory = [0];
     while (member.wpmHistory.length <= secondIndex) {
         member.wpmHistory.push(wpm);
     }
 
-    if (typedLen === paragraphLen) {
+    if (typedLen === paragraphLen && correctLength === paragraphLen) {
         member.finished = true;
         member.finishedAt = Date.now();
         member.wpmHistory[secondIndex] = wpm; // ensure final WPM is correct
