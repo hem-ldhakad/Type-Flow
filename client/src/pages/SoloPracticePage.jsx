@@ -48,7 +48,13 @@ export default function SoloPracticePage() {
             const res = await api.get(`/matches/paragraph/random?wordCount=${selectedWordCount}`);
             if (res.data?.success && res.data?.data?.paragraph) {
                 const p = res.data.data.paragraph;
-                setParagraph(p.content || p.text || '');
+                let text = p.content || p.text || '';
+                if (text) {
+                    let lowered = text.toLowerCase();
+                    text = lowered.replace(/(^\s*|[.!?]\s+)([a-z])/g, (match, separator, letter) => separator + letter.toUpperCase());
+                    text = text.replace(/\b(i|i'm)\b/g, (match) => match.charAt(0).toUpperCase() + match.slice(1));
+                }
+                setParagraph(text);
                 setParagraphId(p.id);
                 setStage('READY');
             } else {
