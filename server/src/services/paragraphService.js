@@ -102,6 +102,11 @@ export const generateParagraph = async (targetWordCount) => {
         source = 'Default';
     }
 
+    // Only capitalize the first letter, leaving no capitals in between the paragraph
+    if (text) {
+        text = text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
+    }
+
     const finalWordCount = text.split(/\s+/).length;
 
     // Upsert into DB for referential integrity (Match requires a paragraphId)

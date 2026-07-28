@@ -31,7 +31,7 @@ export default function DashboardPage() {
             try {
                 const res = await api.get(`/users/${user.id}/stats`);
                 if (active && res.data?.success && res.data?.data) {
-                    const s = res.data.data;
+                    const s = res.data.data.statistics || {};
                     setStats({
                         totalRaces: s.totalRaces || 0,
                         wins: s.wins || 0,
