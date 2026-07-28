@@ -196,7 +196,8 @@ export const updatePlayerProgress = (roomId, userId, typedText, totalKeystrokes)
     const maxMatch = Math.min(typedLen, paragraphLen);
 
     for (let i = 0; i < maxMatch; i++) {
-        if (typedText[i] === paragraph[i]) {
+        // Compare case-insensitively to prevent progress failures during client/server deployment mismatch
+        if (typedText[i].toLowerCase() === paragraph[i].toLowerCase()) {
             correctLength++;
         }
     }
