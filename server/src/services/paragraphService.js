@@ -102,9 +102,13 @@ export const generateParagraph = async (targetWordCount) => {
         source = 'Default';
     }
 
-    // Only capitalize the first letter, leaving no capitals in between the paragraph
     if (text) {
-        text = text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
+        // Lowercase the entire text first
+        let lowered = text.toLowerCase();
+        // Capitalize the first letter of the text, and any letter following a punctuation mark (. ! ?) and a space
+        text = lowered.replace(/(^\s*|[.!?]\s+)([a-z])/g, (match, separator, letter) => separator + letter.toUpperCase());
+        // Fix standalone "I" and "I'm"
+        text = text.replace(/\b(i|i'm)\b/g, (match) => match.charAt(0).toUpperCase() + match.slice(1));
     }
 
     const finalWordCount = text.split(/\s+/).length;
