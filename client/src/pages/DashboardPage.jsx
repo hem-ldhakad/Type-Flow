@@ -185,11 +185,16 @@ export default function DashboardPage() {
                                         placeholder="ROOM CODE"
                                         maxLength={10}
                                         className="input-field code-font"
-                                        style={{ textTransform: 'uppercase', fontSize: '1.2rem', textAlign: 'center', letterSpacing: '4px', marginBottom: '1rem', width: '100%' }}
+                                        style={{ textTransform: 'uppercase', fontSize: '1.2rem', textAlign: 'center', letterSpacing: '4px', marginBottom: '0.5rem', width: '100%' }}
                                         value={joinCode}
-                                        onChange={(e) => setJoinCode(e.target.value)}
+                                        onChange={(e) => { setJoinCode(e.target.value); setError(''); }}
                                         disabled={loading}
                                     />
+                                    {error && (
+                                        <p style={{ color: 'var(--error, #f87171)', fontSize: '0.85rem', marginBottom: '0.75rem', textAlign: 'center' }}>
+                                            ⚠ {error}
+                                        </p>
+                                    )}
                                     <button
                                         type="submit"
                                         className="btn btn-ghost"

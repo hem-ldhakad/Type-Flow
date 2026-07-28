@@ -116,22 +116,25 @@ const typing = async (io, socket, payload) => {
             if (roomManager.allFinished(roomId)) {
                 console.log(`[Socket]: All players finished. Saving match results for room ${roomId}...`);
 
+                // Capture in-memory results before any async operations
+                const inMemoryResults = roomManager.getRaceResults(roomId);
+
+                // Reset room status immediately so players can see COMPLETE screen
+                roomManager.setStatus(roomId, 'LOBBY');
+
+                // Always emit game-end with in-memory results so the UI always shows
+                io.to(roomId).emit('game-end', {
+                    results: inMemoryResults
+                });
+
+                console.log(`[Socket]: Race ended in room ${roomId}. Standings broadcasted.`);
+
+                // Persist to DB asynchronously — UI already shown, so failures are non-blocking
                 try {
                     const summary = await saveMatchResults(roomId, room);
-
-                    // Reset room status in the in-memory manager
-                    roomManager.setStatus(roomId, 'LOBBY');
-
-                    // Broadcast final match wrapup metrics and result records
-                    io.to(roomId).emit('game-end', {
-                        matchId: summary.matchId,
-                        results: summary.results
-                    });
-
-                    console.log(`[Socket]: Race ended in room ${roomId}. Standings broadcasted.`);
+                    console.log(`[Socket]: Match ${summary.matchId} saved to DB for room ${roomId}.`);
                 } catch (dbError) {
-                    console.error('[Socket][typing] Error saving match results:', dbError);
-                    io.to(roomId).emit('error', { message: 'System failed to save match results.' });
+                    console.error('[Socket][typing] DB save failed (results already sent to clients):', dbError);
                 }
             }
         }
