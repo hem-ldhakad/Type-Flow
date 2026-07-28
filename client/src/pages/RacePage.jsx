@@ -375,7 +375,7 @@ export default function RacePage() {
 
         setTypedText(val);
 
-        // Calculate correct characters count
+        // Calculate correct characters count (prefix match)
         let correctCount = 0;
         for (let i = 0; i < val.length; i++) {
             if (val[i] === paragraph[i]) {
@@ -383,25 +383,20 @@ export default function RacePage() {
             }
         }
 
-        // Live accuracy update
-        setTotalKeystrokes((prevKeys) => {
-            const nextKeys = Math.max(prevKeys, correctCount);
-            const acc = nextKeys > 0 ? Math.round((correctCount / nextKeys) * 100) : 100;
-            setLocalAcc(acc);
+        // Update keystrokes ref and accuracy (read/write synchronously, NOT inside a state updater)
+        const nextKeys = Math.max(totalKeystrokes, correctCount);
+        const acc = nextKeys > 0 ? Math.round((correctCount / nextKeys) * 100) : 100;
+        setLocalAcc(acc);
 
-            // Emit events to socket
-            console.log('[RacePage] emit typing:', { roomId, len: val.length, connected });
-            emit('typing', {
-                roomId,
-                typedText: val,
-                totalKeystrokes: nextKeys,
-            });
-
-            return prevKeys;
+        // Emit directly — never inside a setState callback
+        emit('typing', {
+            roomId,
+            typedText: val,
+            totalKeystrokes: nextKeys,
         });
     };
 
-    // Counter for character keys
+    // Counter for character keys — increment on each physical key press
     const handleInputKeyDown = (e) => {
         if (e.key.length === 1) {
             setTotalKeystrokes((prev) => prev + 1);
