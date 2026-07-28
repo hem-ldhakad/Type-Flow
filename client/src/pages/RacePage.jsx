@@ -390,6 +390,7 @@ export default function RacePage() {
             setLocalAcc(acc);
 
             // Emit events to socket
+            console.log('[RacePage] emit typing:', { roomId, len: val.length, connected });
             emit('typing', {
                 roomId,
                 typedText: val,

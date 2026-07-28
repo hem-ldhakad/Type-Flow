@@ -76,12 +76,16 @@ const typing = async (io, socket, payload) => {
         const { roomId, typedText, totalKeystrokes } = payload;
         const { id: userId } = socket.user;
 
+        console.log(`[Socket][typing] received from ${userId}, roomId=${roomId}, len=${typedText?.length}`);
+
         const room = roomManager.getRoom(roomId);
         if (!room) {
+            console.warn(`[Socket][typing] EARLY RETURN: room ${roomId} not found in memory`);
             return socket.emit('error', { message: 'Room not found in active session.' });
         }
 
         if (room.status !== 'RACING') {
+            console.warn(`[Socket][typing] EARLY RETURN: room status is '${room.status}', not RACING`);
             return socket.emit('error', { message: 'Race is not currently active.' });
         }
 
