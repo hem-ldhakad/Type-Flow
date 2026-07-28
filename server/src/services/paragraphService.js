@@ -115,9 +115,16 @@ export const generateParagraph = async (targetWordCount) => {
 
     // Upsert into DB for referential integrity (Match requires a paragraphId)
     let dbParagraph = await prisma.paragraph.findFirst({ where: { text } });
+
     if (!dbParagraph) {
         dbParagraph = await prisma.paragraph.create({
             data: { text, source, category: 'quotes', wordCount: finalWordCount }
+        });
+    } else if (dbParagraph.text !== text) {
+        // Update database if collation matched case-insensitively but casing is incorrect
+        dbParagraph = await prisma.paragraph.update({
+            where: { id: dbParagraph.id },
+            data: { text }
         });
     }
 
