@@ -276,6 +276,6 @@ export const getRaceResults = (roomId) => {
 
     return results.map((res, index) => ({
         ...res,
-        position: index + 1
+        position: res.finished ? (index + 1) : (index + 2)
     }));
 };
