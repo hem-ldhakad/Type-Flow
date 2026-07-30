@@ -268,9 +268,9 @@ export default function SoloPracticePage() {
             return nextKeys;
         });
 
-        // Check for finish when user has typed the full length of the paragraph
-        if (val.length === paragraph.length) {
-            finishMatch(correctCount);
+        // Check for finish when user has typed the full length of a non-empty paragraph
+        if (paragraph && paragraph.length > 0 && val.length === paragraph.length) {
+            finishMatch(val, correctCount);
         }
     };
 
@@ -285,13 +285,17 @@ export default function SoloPracticePage() {
     };
 
     // Submit solo match results
-    const finishMatch = async (correctLen) => {
+    const finishMatch = async (finalVal, correctLen) => {
         const seconds = (Date.now() - matchStartTime) / 1000;
         const finalWpm = seconds > 0 ? Math.round((correctLen / 5) / (seconds / 60)) : 0;
         const finalAcc = totalKeystrokes > 0 ? Math.round((correctLen / totalKeystrokes) * 100) : 100;
 
-        // Player wins ONLY if timer is active (>0) and finished within time limit
-        const won = selectedTimeLimit > 0 && seconds <= selectedTimeLimit;
+        // Player wins ONLY if:
+        // 1. Timer is active (>0)
+        // 2. Finished within time limit (seconds <= selectedTimeLimit)
+        // 3. Fully typed the paragraph text (correctLen === paragraph.length)
+        const isFullyTyped = paragraph && paragraph.length > 0 && correctLen === paragraph.length;
+        const won = selectedTimeLimit > 0 && seconds <= selectedTimeLimit && isFullyTyped;
         setIsWin(won);
 
         // Force-refresh and fill final history datapoint
