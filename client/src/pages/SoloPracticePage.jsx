@@ -34,6 +34,7 @@ export default function SoloPracticePage() {
     const [elapsedTime, setElapsedTime] = useState(0);
     const [timeRemaining, setTimeRemaining] = useState(30);
     const [isTimeExpired, setIsTimeExpired] = useState(false);
+    const [isWin, setIsWin] = useState(false);
 
     const [localWpm, setLocalWpm] = useState(0);
     const [localAcc, setLocalAcc] = useState(100);
@@ -95,6 +96,7 @@ export default function SoloPracticePage() {
         setElapsedTime(0);
         setTimeRemaining(selectedTimeLimit);
         setIsTimeExpired(false);
+        setIsWin(false);
         setLocalWpm(0);
         setLocalAcc(100);
         setWpmHistory([0]);
@@ -124,6 +126,7 @@ export default function SoloPracticePage() {
                 setElapsedTime(0);
                 setTimeRemaining(selectedTimeLimit);
                 setIsTimeExpired(false);
+                setIsWin(false);
                 setWpmHistory([0]);
             } else {
                 setCountdownSecs(secs);
@@ -141,6 +144,7 @@ export default function SoloPracticePage() {
     // Time expired handler
     const handleTimeExpired = useCallback(async (finalSeconds) => {
         setIsTimeExpired(true);
+        setIsWin(false);
         const currText = typedTextRef.current || '';
         let correctCount = 0;
         for (let i = 0; i < currText.length; i++) {
@@ -288,6 +292,7 @@ export default function SoloPracticePage() {
 
         // Player wins if timer is active (>0) and finished within time limit
         const won = selectedTimeLimit > 0 ? seconds <= selectedTimeLimit : true;
+        setIsWin(won);
 
         // Force-refresh and fill final history datapoint
         const finalHistory = [...wpmHistory];
@@ -595,17 +600,17 @@ export default function SoloPracticePage() {
                             marginBottom: '1.75rem'
                         }}>
                             <span style={{ fontSize: '2.5rem' }}>
-                                {result?.isWin ? '🏆' : isTimeExpired ? '⏳' : '🎋'}
+                                {isWin ? '🏆' : isTimeExpired ? '⏳' : '🎋'}
                             </span>
                             <h2 style={{ margin: '0.25rem 0 0.5rem', fontSize: '1.75rem', fontWeight: 700 }}>
-                                {result?.isWin
+                                {isWin
                                     ? 'Victory! You Beat the Timer!'
                                     : isTimeExpired
                                     ? 'Time Expired!'
                                     : 'Practice Complete!'}
                             </h2>
                             <p style={{ color: 'var(--text-muted)', margin: 0, fontSize: '0.95rem' }}>
-                                {result?.isWin
+                                {isWin
                                     ? `Finished within ${selectedTimeLimit}s limit — +1 Win added to your profile!`
                                     : isTimeExpired
                                     ? `Time limit of ${selectedTimeLimit}s expired before completion — No win recorded.`
@@ -641,10 +646,10 @@ export default function SoloPracticePage() {
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.5rem' }}>
                                     {[
                                         {
-                                            icon: result?.isWin ? '🏆' : isTimeExpired ? '⏳' : '🎋',
+                                            icon: isWin ? '🏆' : isTimeExpired ? '⏳' : '🎋',
                                             label: 'Outcome',
-                                            value: result?.isWin ? 'WIN (+1 Win)' : isTimeExpired ? 'Time Expired (No Win)' : 'Completed',
-                                            color: result?.isWin ? '#10b981' : isTimeExpired ? '#ef4444' : '#8b5cf6'
+                                            value: isWin ? 'WIN (+1 Win)' : isTimeExpired ? 'Time Expired (No Win)' : 'Completed',
+                                            color: isWin ? '#10b981' : isTimeExpired ? '#ef4444' : '#8b5cf6'
                                         },
                                         { icon: '🎯', label: 'Accuracy', value: `${localAcc}%`, color: localAcc >= 95 ? '#10b981' : localAcc >= 80 ? '#f59e0b' : '#ef4444' },
                                         { icon: '⏱️', label: 'Time Spent', value: `${elapsedTime}s`, color: 'var(--text-main)' },
