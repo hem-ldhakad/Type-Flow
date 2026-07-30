@@ -102,7 +102,7 @@ export const getRandomParagraph = async (req, res, next) => {
 export const submitSoloMatch = async (req, res, next) => {
     try {
         const userId = req.user.id;
-        const { paragraphId, wpm, accuracy, wpmHistory, keystrokeHistory } = req.body;
+        const { paragraphId, wpm, accuracy, wpmHistory, keystrokeHistory, won, timeLimit } = req.body;
 
         if (!paragraphId || wpm === undefined || accuracy === undefined) {
             return res.status(400).json({
@@ -110,6 +110,10 @@ export const submitSoloMatch = async (req, res, next) => {
                 message: 'Missing required match results parameters.'
             });
         }
+
+        // Determine if player won (finished within time limit if timer active)
+        const isWin = typeof won === 'boolean' ? won : true;
+        const position = isWin ? 1 : 2; // Position 1 increments user's wins count in stats
 
         const paragraph = await prisma.paragraph.findUnique({ where: { id: paragraphId } });
         if (!paragraph) {
@@ -136,7 +140,7 @@ export const submitSoloMatch = async (req, res, next) => {
                     userId: userId,
                     wpm: parseInt(wpm, 10),
                     accuracy: parseFloat(accuracy),
-                    position: 1, // Only user playing
+                    position: position,
                     wpmHistory: JSON.stringify(wpmHistory || []),
                     keystrokeHistory: JSON.stringify(keystrokeHistory || [])
                 }
@@ -155,7 +159,8 @@ export const submitSoloMatch = async (req, res, next) => {
             if (user) {
                 const baseXP = 20; // Solo test base experience
                 const speedXP = Math.floor(wpm / 5);
-                rewardXP = baseXP + speedXP;
+                const winXP = isWin ? 20 : 0; // Bonus XP for beating the timer
+                rewardXP = baseXP + speedXP + winXP;
 
                 newXp = user.xp + rewardXP;
                 newLevel = user.level;
@@ -176,7 +181,8 @@ export const submitSoloMatch = async (req, res, next) => {
                 resultId: newResult.id,
                 xpGained: rewardXP,
                 currentXp: newXp,
-                currentLevel: newLevel
+                currentLevel: newLevel,
+                isWin
             };
         });
 

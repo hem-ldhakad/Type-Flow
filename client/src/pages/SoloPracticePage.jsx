@@ -14,8 +14,9 @@ export default function SoloPracticePage() {
     const [stage, setStage] = useState('LOADING');
     const [errorMsg, setErrorMsg] = useState('');
 
-    // Word count preference state
+    // Word count & Time limit preference state
     const [selectedWordCount, setSelectedWordCount] = useState(25);
+    const [selectedTimeLimit, setSelectedTimeLimit] = useState(30); // in seconds (0 = Off)
 
     // Paragraph data
     const [paragraph, setParagraph] = useState('');
@@ -28,14 +29,17 @@ export default function SoloPracticePage() {
     // Timing / live metrics
     const [matchStartTime, setMatchStartTime] = useState(null);
     const [elapsedTime, setElapsedTime] = useState(0);
+    const [timeRemaining, setTimeRemaining] = useState(30);
+    const [isTimeExpired, setIsTimeExpired] = useState(false);
+
     const [localWpm, setLocalWpm] = useState(0);
     const [localAcc, setLocalAcc] = useState(100);
     const [wpmHistory, setWpmHistory] = useState([0]);
 
-    // Countdown
+    // Countdown before racing
     const [countdownSecs, setCountdownSecs] = useState(3);
 
-    // Results
+    // Results from API
     const [result, setResult] = useState(null);
 
     const inputRef = useRef(null);
@@ -84,13 +88,15 @@ export default function SoloPracticePage() {
         setTotalKeystrokes(0);
         setMatchStartTime(null);
         setElapsedTime(0);
+        setTimeRemaining(selectedTimeLimit);
+        setIsTimeExpired(false);
         setLocalWpm(0);
         setLocalAcc(100);
         setWpmHistory([0]);
         setCountdownSecs(3);
         setResult(null);
         fetchParagraph();
-    }, [fetchParagraph]);
+    }, [fetchParagraph, selectedTimeLimit]);
 
     // 2. Countdown timer
     const startCountdown = useCallback(() => {
@@ -109,12 +115,14 @@ export default function SoloPracticePage() {
                 setLocalWpm(0);
                 setLocalAcc(100);
                 setElapsedTime(0);
+                setTimeRemaining(selectedTimeLimit);
+                setIsTimeExpired(false);
                 setWpmHistory([0]);
             } else {
                 setCountdownSecs(secs);
             }
         }, 1000);
-    }, []);
+    }, [selectedTimeLimit]);
 
     // Autofocus input when RACING starts
     useEffect(() => {
@@ -123,13 +131,72 @@ export default function SoloPracticePage() {
         }
     }, [stage]);
 
+    // Time expired handler
+    const handleTimeExpired = useCallback(async (finalSeconds) => {
+        setIsTimeExpired(true);
+        let correctCount = 0;
+        setTypedText((currText) => {
+            for (let i = 0; i < currText.length; i++) {
+                if (currText[i] === paragraph[i]) {
+                    correctCount++;
+                }
+            }
+            return currText;
+        });
+
+        const duration = finalSeconds || selectedTimeLimit || 1;
+        const finalWpm = Math.round((correctCount / 5) / (duration / 60));
+        const finalAcc = totalKeystrokes > 0 ? Math.round((correctCount / totalKeystrokes) * 100) : 100;
+
+        const finalHistory = [...wpmHistory];
+        const lastIdx = Math.max(1, Math.floor(duration));
+        while (finalHistory.length <= lastIdx) {
+            finalHistory.push(finalWpm);
+        }
+        finalHistory[lastIdx] = finalWpm;
+
+        setLocalWpm(finalWpm);
+        setLocalAcc(finalAcc);
+        setWpmHistory(finalHistory);
+        setStage('COMPLETE');
+
+        try {
+            const res = await api.post('/matches/solo', {
+                paragraphId,
+                wpm: finalWpm,
+                accuracy: finalAcc,
+                wpmHistory: finalHistory,
+                won: false, // Time expired before completing -> NO WIN
+                timeLimit: selectedTimeLimit
+            });
+
+            if (res.data?.success && res.data?.data) {
+                setResult(res.data.data);
+            }
+        } catch (err) {
+            console.warn('Failed to save solo match:', err.message);
+        }
+    }, [paragraph, selectedTimeLimit, totalKeystrokes, wpmHistory, paragraphId]);
+
     // Live timer tick during RACING
     useEffect(() => {
         if (stage !== 'RACING' || !matchStartTime) return;
 
         const interval = setInterval(() => {
             const seconds = (Date.now() - matchStartTime) / 1000;
-            setElapsedTime(Math.round(seconds));
+            const roundedSecs = Math.round(seconds);
+            setElapsedTime(roundedSecs);
+
+            if (selectedTimeLimit > 0) {
+                const rem = Math.max(0, Math.ceil(selectedTimeLimit - seconds));
+                setTimeRemaining(rem);
+
+                if (seconds >= selectedTimeLimit) {
+                    clearInterval(interval);
+                    handleTimeExpired(seconds);
+                    return;
+                }
+            }
 
             const secondIndex = Math.max(1, Math.floor(seconds));
 
@@ -161,7 +228,7 @@ export default function SoloPracticePage() {
         }, 100);
 
         return () => clearInterval(interval);
-    }, [stage, matchStartTime, paragraph]);
+    }, [stage, matchStartTime, paragraph, selectedTimeLimit, handleTimeExpired]);
 
     // Handle input change & detect finish
     const handleInputChange = (e) => {
@@ -206,6 +273,9 @@ export default function SoloPracticePage() {
         const finalWpm = seconds > 0 ? Math.round((correctLen / 5) / (seconds / 60)) : 0;
         const finalAcc = totalKeystrokes > 0 ? Math.round((correctLen / totalKeystrokes) * 100) : 100;
 
+        // Player wins if timer is active (>0) and finished within time limit
+        const won = selectedTimeLimit > 0 ? seconds <= selectedTimeLimit : true;
+
         // Force-refresh and fill final history datapoint
         const finalHistory = [...wpmHistory];
         const lastIdx = Math.max(1, Math.floor(seconds));
@@ -225,6 +295,8 @@ export default function SoloPracticePage() {
                 wpm: finalWpm,
                 accuracy: finalAcc,
                 wpmHistory: finalHistory,
+                won,
+                timeLimit: selectedTimeLimit
             });
 
             if (res.data?.success && res.data?.data) {
@@ -296,7 +368,7 @@ export default function SoloPracticePage() {
                             {stage === 'READY' && '🐼 SOLO PRACTICE'}
                             {stage === 'COUNTDOWN' && '⏳ PREPARING...'}
                             {stage === 'RACING' && '🏁 TYPING'}
-                            {stage === 'COMPLETE' && '🥇 COMPLETE'}
+                            {stage === 'COMPLETE' && (result?.isWin ? '🏆 VICTORY' : '🥇 COMPLETE')}
                         </span>
                         <h1 className={styles.title}>Solo Practice 🐼</h1>
                     </div>
@@ -329,7 +401,7 @@ export default function SoloPracticePage() {
                             </div>
 
                             {/* Word Count Selector for Solo Practice */}
-                            <div style={{ margin: '1.5rem 0', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            <div style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                                 <label style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-main, #333333)' }}>
                                     Select Word Limit:
                                 </label>
@@ -348,6 +420,45 @@ export default function SoloPracticePage() {
                                             }}
                                         >
                                             ⚡ {size} Words
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Time Limit Selector for Solo Practice */}
+                            <div style={{ margin: '1.25rem 0', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <label style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-main, #333333)' }}>
+                                        Select Timer / Time Limit:
+                                    </label>
+                                    <span style={{ fontSize: '0.78rem', color: '#8b5cf6', fontWeight: 600 }}>
+                                        🏆 Beat timer = +1 Win
+                                    </span>
+                                </div>
+                                <div style={{ display: 'flex', gap: '8px' }}>
+                                    {[
+                                        { label: '15s', value: 15 },
+                                        { label: '30s', value: 30 },
+                                        { label: '60s', value: 60 },
+                                        { label: '120s', value: 120 },
+                                        { label: 'Off', value: 0 }
+                                    ].map((item) => (
+                                        <button
+                                            key={item.value}
+                                            type="button"
+                                            className={`btn ${selectedTimeLimit === item.value ? 'btn-primary' : 'btn-ghost'}`}
+                                            onClick={() => {
+                                                setSelectedTimeLimit(item.value);
+                                                setTimeRemaining(item.value);
+                                            }}
+                                            style={{
+                                                flex: 1,
+                                                padding: '10px 6px',
+                                                fontSize: '0.85rem',
+                                                border: selectedTimeLimit === item.value ? 'none' : '1px solid var(--border-color, #eef2f6)'
+                                            }}
+                                        >
+                                            ⏱️ {item.label}
                                         </button>
                                     ))}
                                 </div>
@@ -431,9 +542,27 @@ export default function SoloPracticePage() {
                             />
 
                             <div className={styles.typingFooter}>
-                                <span className={styles.timer}>
-                                    Time: <strong>{elapsedTime}s</strong>
-                                </span>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                    <span className={styles.timer}>
+                                        Time: <strong>{elapsedTime}s</strong>
+                                    </span>
+                                    {selectedTimeLimit > 0 && (
+                                        <span
+                                            style={{
+                                                padding: '3px 10px',
+                                                borderRadius: '20px',
+                                                fontSize: '0.82rem',
+                                                fontWeight: 700,
+                                                background: timeRemaining <= 5 ? 'rgba(239, 68, 68, 0.15)' : 'rgba(139, 92, 246, 0.12)',
+                                                color: timeRemaining <= 5 ? '#ef4444' : '#8b5cf6',
+                                                border: timeRemaining <= 5 ? '1px solid #ef4444' : '1px solid rgba(139, 92, 246, 0.3)',
+                                                transition: 'all 0.3s ease'
+                                            }}
+                                        >
+                                            ⏳ {timeRemaining}s left
+                                        </span>
+                                    )}
+                                </div>
                                 <div className={styles.liveStats}>
                                     <span>WPM: <strong>{localWpm}</strong></span>
                                     <span>ACC: <strong>{localAcc}%</strong></span>
@@ -451,12 +580,22 @@ export default function SoloPracticePage() {
                             textAlign: 'center',
                             marginBottom: '1.75rem'
                         }}>
-                            <span style={{ fontSize: '2.5rem' }}>🏆</span>
+                            <span style={{ fontSize: '2.5rem' }}>
+                                {result?.isWin ? '🏆' : isTimeExpired ? '⏳' : '🎋'}
+                            </span>
                             <h2 style={{ margin: '0.25rem 0 0.5rem', fontSize: '1.75rem', fontWeight: 700 }}>
-                                Practice Complete!
+                                {result?.isWin
+                                    ? 'Victory! You Beat the Timer!'
+                                    : isTimeExpired
+                                    ? 'Time Expired!'
+                                    : 'Practice Complete!'}
                             </h2>
                             <p style={{ color: 'var(--text-muted)', margin: 0, fontSize: '0.95rem' }}>
-                                Here's how you performed — {selectedWordCount} words
+                                {result?.isWin
+                                    ? `Finished within ${selectedTimeLimit}s limit — +1 Win added to your profile!`
+                                    : isTimeExpired
+                                    ? `Time limit of ${selectedTimeLimit}s expired before completion — No win recorded.`
+                                    : `Here's how you performed — ${selectedWordCount} words`}
                             </p>
                         </div>
 
@@ -487,8 +626,14 @@ export default function SoloPracticePage() {
                                 {/* Stat Rows */}
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.5rem' }}>
                                     {[
+                                        {
+                                            icon: result?.isWin ? '🏆' : isTimeExpired ? '⏳' : '🎋',
+                                            label: 'Outcome',
+                                            value: result?.isWin ? 'WIN (+1 Win)' : isTimeExpired ? 'Time Expired (No Win)' : 'Completed',
+                                            color: result?.isWin ? '#10b981' : isTimeExpired ? '#ef4444' : '#8b5cf6'
+                                        },
                                         { icon: '🎯', label: 'Accuracy', value: `${localAcc}%`, color: localAcc >= 95 ? '#10b981' : localAcc >= 80 ? '#f59e0b' : '#ef4444' },
-                                        { icon: '⏱️', label: 'Time', value: `${elapsedTime}s`, color: 'var(--text-main)' },
+                                        { icon: '⏱️', label: 'Time Spent', value: `${elapsedTime}s`, color: 'var(--text-main)' },
                                         { icon: '📝', label: 'Words', value: `${selectedWordCount} words`, color: 'var(--text-main)' },
                                         ...(result ? [{ icon: '🎋', label: 'XP Gained', value: `+${result.xpGained} XP`, color: '#8b5cf6' }] : [])
                                     ].map((stat) => (
@@ -588,3 +733,4 @@ export default function SoloPracticePage() {
         </div>
     );
 }
+
