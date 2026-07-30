@@ -290,8 +290,8 @@ export default function SoloPracticePage() {
         const finalWpm = seconds > 0 ? Math.round((correctLen / 5) / (seconds / 60)) : 0;
         const finalAcc = totalKeystrokes > 0 ? Math.round((correctLen / totalKeystrokes) * 100) : 100;
 
-        // Player wins if timer is active (>0) and finished within time limit
-        const won = selectedTimeLimit > 0 ? seconds <= selectedTimeLimit : true;
+        // Player wins ONLY if timer is active (>0) and finished within time limit
+        const won = selectedTimeLimit > 0 && seconds <= selectedTimeLimit;
         setIsWin(won);
 
         // Force-refresh and fill final history datapoint

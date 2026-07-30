@@ -112,8 +112,8 @@ export const submitSoloMatch = async (req, res, next) => {
         }
 
         // Determine if player won (finished within time limit if timer active)
-        const isWin = typeof won === 'boolean' ? won : true;
-        const position = isWin ? 1 : 2; // Position 1 increments user's wins count in stats
+        const isWin = won === true || won === 'true';
+        const position = isWin ? 1 : 2; // Position 1 increments user's wins count in stats, Position 2 does NOT
 
         let paragraph = await prisma.paragraph.findUnique({ where: { id: paragraphId } });
         if (!paragraph) {
