@@ -22,7 +22,7 @@ export default function DashboardPage() {
     const [loading, setLoading] = useState(false);
     const [showJoinModal, setShowJoinModal] = useState(false);
 
-    // Load user profile statistics from backend on page mount
+    // Load user profile statistics from backend on page mount & focus
     useEffect(() => {
         if (!user?.id) return;
         let active = true;
@@ -46,8 +46,15 @@ export default function DashboardPage() {
         };
 
         fetchStats();
+
+        const handleFocus = () => {
+            if (active) fetchStats();
+        };
+        window.addEventListener('focus', handleFocus);
+
         return () => {
             active = false;
+            window.removeEventListener('focus', handleFocus);
         };
     }, [user?.id]);
 

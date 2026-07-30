@@ -16,21 +16,33 @@ export default function LeaderboardPage() {
 
     useEffect(() => {
         let active = true;
-        setLoading(true);
-        setError('');
+        
+        const loadLeaderboard = () => {
+            setLoading(true);
+            setError('');
+            api.get(`/users/leaderboard?period=${period}`)
+                .then((res) => {
+                    if (active && res.data?.success) {
+                        setBoard(res.data.data.leaderboard || []);
+                    }
+                })
+                .catch((err) => {
+                    if (active) setError(err.response?.data?.message || 'Failed to load leaderboard.');
+                })
+                .finally(() => { if (active) setLoading(false); });
+        };
 
-        api.get(`/users/leaderboard?period=${period}`)
-            .then((res) => {
-                if (active && res.data?.success) {
-                    setBoard(res.data.data.leaderboard || []);
-                }
-            })
-            .catch((err) => {
-                if (active) setError(err.response?.data?.message || 'Failed to load leaderboard.');
-            })
-            .finally(() => { if (active) setLoading(false); });
+        loadLeaderboard();
 
-        return () => { active = false; };
+        const handleFocus = () => {
+            if (active) loadLeaderboard();
+        };
+        window.addEventListener('focus', handleFocus);
+
+        return () => {
+            active = false;
+            window.removeEventListener('focus', handleFocus);
+        };
     }, [period]);
 
     return (

@@ -52,23 +52,35 @@ export default function ProfilePage() {
     // Fetch profile stats from the backend
     useEffect(() => {
         let active = true;
-        setLoadingProfile(true);
-        setError('');
+        
+        const loadStats = () => {
+            setLoadingProfile(true);
+            setError('');
+            api.get(`/users/${userId}/stats`)
+                .then((res) => {
+                    if (active && res.data?.success) {
+                        const d = res.data.data;
+                        setProfile({ username: d.username, level: d.level, xp: d.xp, joinedAt: d.joinedAt });
+                        setStats(d.statistics);
+                    }
+                })
+                .catch((err) => {
+                    if (active) setError(err.response?.data?.message || 'Failed to load profile.');
+                })
+                .finally(() => { if (active) setLoadingProfile(false); });
+        };
 
-        api.get(`/users/${userId}/stats`)
-            .then((res) => {
-                if (active && res.data?.success) {
-                    const d = res.data.data;
-                    setProfile({ username: d.username, level: d.level, xp: d.xp, joinedAt: d.joinedAt });
-                    setStats(d.statistics);
-                }
-            })
-            .catch((err) => {
-                if (active) setError(err.response?.data?.message || 'Failed to load profile.');
-            })
-            .finally(() => { if (active) setLoadingProfile(false); });
+        loadStats();
 
-        return () => { active = false; };
+        const handleFocus = () => {
+            if (active) loadStats();
+        };
+        window.addEventListener('focus', handleFocus);
+
+        return () => {
+            active = false;
+            window.removeEventListener('focus', handleFocus);
+        };
     }, [userId]);
 
     // Fetch match history (only for own profile; others cannot see history)
