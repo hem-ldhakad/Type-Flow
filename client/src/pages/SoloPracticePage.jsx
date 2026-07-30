@@ -26,6 +26,9 @@ export default function SoloPracticePage() {
     const [typedText, setTypedText] = useState('');
     const [totalKeystrokes, setTotalKeystrokes] = useState(0);
 
+    const typedTextRef = useRef('');
+    const totalKeystrokesRef = useRef(0);
+
     // Timing / live metrics
     const [matchStartTime, setMatchStartTime] = useState(null);
     const [elapsedTime, setElapsedTime] = useState(0);
@@ -84,6 +87,8 @@ export default function SoloPracticePage() {
 
     // Handle Practice Again state reset
     const handlePracticeAgain = useCallback(() => {
+        typedTextRef.current = '';
+        totalKeystrokesRef.current = 0;
         setTypedText('');
         setTotalKeystrokes(0);
         setMatchStartTime(null);
@@ -110,6 +115,8 @@ export default function SoloPracticePage() {
                 clearInterval(interval);
                 setStage('RACING');
                 setMatchStartTime(Date.now());
+                typedTextRef.current = '';
+                totalKeystrokesRef.current = 0;
                 setTypedText('');
                 setTotalKeystrokes(0);
                 setLocalWpm(0);
@@ -134,19 +141,18 @@ export default function SoloPracticePage() {
     // Time expired handler
     const handleTimeExpired = useCallback(async (finalSeconds) => {
         setIsTimeExpired(true);
+        const currText = typedTextRef.current || '';
         let correctCount = 0;
-        setTypedText((currText) => {
-            for (let i = 0; i < currText.length; i++) {
-                if (currText[i] === paragraph[i]) {
-                    correctCount++;
-                }
+        for (let i = 0; i < currText.length; i++) {
+            if (currText[i] === paragraph[i]) {
+                correctCount++;
             }
-            return currText;
-        });
+        }
 
         const duration = finalSeconds || selectedTimeLimit || 1;
-        const finalWpm = Math.round((correctCount / 5) / (duration / 60));
-        const finalAcc = totalKeystrokes > 0 ? Math.round((correctCount / totalKeystrokes) * 100) : 100;
+        const finalWpm = duration > 0 ? Math.round((correctCount / 5) / (duration / 60)) : 0;
+        const totalKeys = Math.max(totalKeystrokesRef.current, correctCount);
+        const finalAcc = totalKeys > 0 ? Math.round((correctCount / totalKeys) * 100) : 100;
 
         const finalHistory = [...wpmHistory];
         const lastIdx = Math.max(1, Math.floor(duration));
@@ -176,7 +182,7 @@ export default function SoloPracticePage() {
         } catch (err) {
             console.warn('Failed to save solo match:', err.message);
         }
-    }, [paragraph, selectedTimeLimit, totalKeystrokes, wpmHistory, paragraphId]);
+    }, [paragraph, selectedTimeLimit, wpmHistory, paragraphId]);
 
     // Live timer tick during RACING
     useEffect(() => {
@@ -237,6 +243,7 @@ export default function SoloPracticePage() {
         const val = e.target.value;
         if (val.length > paragraph.length) return;
 
+        typedTextRef.current = val;
         setTypedText(val);
 
         // Calculate total correct matching characters count
@@ -250,9 +257,10 @@ export default function SoloPracticePage() {
         // Live accuracy update
         setTotalKeystrokes((prevKeys) => {
             const nextKeys = Math.max(prevKeys, correctCount);
+            totalKeystrokesRef.current = nextKeys;
             const acc = nextKeys > 0 ? Math.round((correctCount / nextKeys) * 100) : 100;
             setLocalAcc(acc);
-            return prevKeys;
+            return nextKeys;
         });
 
         // Check for finish when user has typed the full length of the paragraph
@@ -263,7 +271,11 @@ export default function SoloPracticePage() {
 
     const handleInputKeyDown = (e) => {
         if (e.key.length === 1) {
-            setTotalKeystrokes((prev) => prev + 1);
+            setTotalKeystrokes((prev) => {
+                const next = prev + 1;
+                totalKeystrokesRef.current = next;
+                return next;
+            });
         }
     };
 
