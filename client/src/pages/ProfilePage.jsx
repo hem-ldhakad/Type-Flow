@@ -19,7 +19,7 @@ const PAGE_SIZE = 10;
 
 export default function ProfilePage() {
     const { userId } = useParams();
-    const { user: me, logout } = useAuth();
+    const { user: me, logout, statsVersion } = useAuth();
     const navigate = useNavigate();
     const isOwnProfile = me?.id === userId;
 
@@ -44,7 +44,6 @@ export default function ProfilePage() {
             navigate('/', { replace: true });
         } catch (err) {
             setDeleteError(err.response?.data?.message || 'Failed to delete account.');
-        } finally {
             setIsDeleting(false);
         }
     };
@@ -81,7 +80,7 @@ export default function ProfilePage() {
             active = false;
             window.removeEventListener('focus', handleFocus);
         };
-    }, [userId]);
+    }, [userId, statsVersion]);
 
     // Fetch match history (only for own profile; others cannot see history)
     const fetchMatches = (page = 1) => {

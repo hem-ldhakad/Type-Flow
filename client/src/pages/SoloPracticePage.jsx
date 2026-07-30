@@ -659,8 +659,8 @@ export default function SoloPracticePage() {
                                         { icon: '⏱️', label: 'Time Spent', value: `${elapsedTime}s`, color: 'var(--text-main)' },
                                         { icon: '📝', label: 'Words', value: `${selectedWordCount} words`, color: 'var(--text-main)' },
                                         ...(result ? [
-                                            { icon: '🥇', label: 'Total Wins', value: `${result.wins || 0} (${result.winRatio || 0}%)`, color: '#f59e0b' },
-                                            { icon: '🏁', label: 'Total Races', value: `${result.totalRaces || 0} Races`, color: 'var(--text-main)' },
+                                            { icon: '🥇', label: 'Total Wins', value: isWin ? `${result.wins || 0} (+1 Win Added!)` : `${result.wins || 0} (No Win Added)`, color: '#f59e0b' },
+                                            { icon: '🏁', label: 'Total Races', value: `${result.totalRaces || 0} Races (+1 Race)`, color: 'var(--text-main)' },
                                             { icon: '🎋', label: 'XP Gained', value: `+${result.xpGained} XP`, color: '#8b5cf6' }
                                         ] : [])
                                     ].map((stat) => (

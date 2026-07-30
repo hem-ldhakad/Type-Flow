@@ -8,7 +8,7 @@ import styles from './LeaderboardPage.module.css';
 const MEDAL = { 1: '🥇', 2: '🥈', 3: '🥉' };
 
 export default function LeaderboardPage() {
-    const { user, isAuthenticated } = useAuth();
+    const { user, isAuthenticated, statsVersion } = useAuth();
     const [period, setPeriod] = useState('all');
     const [board, setBoard] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -43,7 +43,7 @@ export default function LeaderboardPage() {
             active = false;
             window.removeEventListener('focus', handleFocus);
         };
-    }, [period]);
+    }, [period, statsVersion]);
 
     return (
         <div className={styles.page}>

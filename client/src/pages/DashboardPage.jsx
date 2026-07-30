@@ -6,7 +6,7 @@ import api from '../api/axios';
 import styles from './DashboardPage.module.css';
 
 export default function DashboardPage() {
-    const { user } = useAuth();
+    const { user, statsVersion } = useAuth();
     const navigate = useNavigate();
 
     const [stats, setStats] = useState({
@@ -22,7 +22,7 @@ export default function DashboardPage() {
     const [loading, setLoading] = useState(false);
     const [showJoinModal, setShowJoinModal] = useState(false);
 
-    // Load user profile statistics from backend on page mount & focus
+    // Load user profile statistics from backend on page mount, focus & stats version update
     useEffect(() => {
         if (!user?.id) return;
         let active = true;
@@ -56,7 +56,7 @@ export default function DashboardPage() {
             active = false;
             window.removeEventListener('focus', handleFocus);
         };
-    }, [user?.id]);
+    }, [user?.id, statsVersion]);
 
     const handleCreateRoom = async () => {
         setError('');
