@@ -610,15 +610,15 @@ export default function SoloPracticePage() {
                                 {isWin
                                     ? 'Victory! You Beat the Timer!'
                                     : isTimeExpired
-                                    ? 'Time Expired!'
-                                    : 'Practice Complete!'}
+                                        ? 'Time Expired!'
+                                        : 'Practice Complete!'}
                             </h2>
                             <p style={{ color: 'var(--text-muted)', margin: 0, fontSize: '0.95rem' }}>
                                 {isWin
                                     ? `Finished within ${selectedTimeLimit}s limit — +1 Win added to your profile!`
                                     : isTimeExpired
-                                    ? `Time limit of ${selectedTimeLimit}s expired before completion — No win recorded.`
-                                    : `Here's how you performed — ${selectedWordCount} words`}
+                                        ? `Time limit of ${selectedTimeLimit}s expired before completion — No win recorded.`
+                                        : `Here's how you performed — ${selectedWordCount} words`}
                             </p>
                         </div>
 
