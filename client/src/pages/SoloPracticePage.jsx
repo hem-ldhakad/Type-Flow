@@ -8,7 +8,7 @@ import SpeedChart from '../components/SpeedChart';
 
 export default function SoloPracticePage() {
     const navigate = useNavigate();
-    const { user } = useAuth();
+    const { user, refetchUser } = useAuth();
 
     // Stage: LOADING → READY → COUNTDOWN → RACING → COMPLETE
     const [stage, setStage] = useState('LOADING');
@@ -179,10 +179,11 @@ export default function SoloPracticePage() {
             if (res.data?.success && res.data?.data) {
                 setResult(res.data.data);
             }
+            if (refetchUser) refetchUser();
         } catch (err) {
             console.warn('Failed to save solo match:', err.message);
         }
-    }, [paragraph, selectedTimeLimit, wpmHistory, paragraphId]);
+    }, [paragraph, selectedTimeLimit, wpmHistory, paragraphId, refetchUser]);
 
     // Live timer tick during RACING
     useEffect(() => {
@@ -314,6 +315,7 @@ export default function SoloPracticePage() {
             if (res.data?.success && res.data?.data) {
                 setResult(res.data.data);
             }
+            if (refetchUser) refetchUser();
         } catch (err) {
             console.warn('Failed to save solo match:', err.message);
         }
@@ -647,7 +649,11 @@ export default function SoloPracticePage() {
                                         { icon: '🎯', label: 'Accuracy', value: `${localAcc}%`, color: localAcc >= 95 ? '#10b981' : localAcc >= 80 ? '#f59e0b' : '#ef4444' },
                                         { icon: '⏱️', label: 'Time Spent', value: `${elapsedTime}s`, color: 'var(--text-main)' },
                                         { icon: '📝', label: 'Words', value: `${selectedWordCount} words`, color: 'var(--text-main)' },
-                                        ...(result ? [{ icon: '🎋', label: 'XP Gained', value: `+${result.xpGained} XP`, color: '#8b5cf6' }] : [])
+                                        ...(result ? [
+                                            { icon: '🥇', label: 'Total Wins', value: `${result.wins || 0} (${result.winRatio || 0}%)`, color: '#f59e0b' },
+                                            { icon: '🏁', label: 'Total Races', value: `${result.totalRaces || 0} Races`, color: 'var(--text-main)' },
+                                            { icon: '🎋', label: 'XP Gained', value: `+${result.xpGained} XP`, color: '#8b5cf6' }
+                                        ] : [])
                                     ].map((stat) => (
                                         <div key={stat.label} style={{
                                             display: 'flex',

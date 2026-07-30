@@ -176,13 +176,22 @@ export const submitSoloMatch = async (req, res, next) => {
                 });
             }
 
+            // 4. Calculate total user race statistics
+            const userResults = await tx.result.findMany({ where: { userId } });
+            const totalRaces = userResults.length;
+            const totalWins = userResults.filter(r => r.position === 1).length;
+            const winRatio = totalRaces > 0 ? Math.round((totalWins / totalRaces) * 100) : 0;
+
             return {
                 matchId: match.id,
                 resultId: newResult.id,
                 xpGained: rewardXP,
                 currentXp: newXp,
                 currentLevel: newLevel,
-                isWin
+                isWin,
+                totalRaces,
+                wins: totalWins,
+                winRatio
             };
         });
 
