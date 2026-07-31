@@ -43,7 +43,6 @@ export const getUserStats = async (req, res, next) => {
             const sumAccuracy = matchResults.reduce((acc, curr) => acc + curr.accuracy, 0);
 
             averageWpm = Math.round(sumWpm / totalRaces);
-            averageAccuracy = Math.round((sumAccuracy / totalRaces) * 10) / 10;
             peakWpm = Math.max(...matchResults.map(r => r.wpm));
             wins = matchResults.filter(r => r.position === 1).length;
         }

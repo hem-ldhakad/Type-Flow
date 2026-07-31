@@ -142,7 +142,7 @@ export default function DashboardPage() {
                     </div>
                 </div>
 
-                {error && (
+                {!showJoinModal && error && (
                     <div role="alert" className={styles.errorBanner}>
                         ⚠ {error}
                     </div>

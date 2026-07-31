@@ -9,7 +9,7 @@ import styles from './RacePage.module.css';
 export default function RacePage() {
     const { roomId } = useParams();
     const navigate = useNavigate();
-    const { user } = useAuth();
+    const { user, refetchUser } = useAuth();
     const { emit, on, off, connected } = useSocket();
 
     // Room metadata from database
@@ -270,6 +270,7 @@ export default function RacePage() {
             console.log('[Socket] game-end:', payload);
             setRoomStatus('COMPLETE');
             setMatchResults(payload.results || []);
+            if (refetchUser) refetchUser();
         };
 
         const handleSocketError = (payload) => {

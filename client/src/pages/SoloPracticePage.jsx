@@ -183,9 +183,10 @@ export default function SoloPracticePage() {
             if (res.data?.success && res.data?.data) {
                 setResult(res.data.data);
             }
-            if (refetchUser) refetchUser();
         } catch (err) {
             console.warn('Failed to save solo match:', err.message);
+        } finally {
+            if (refetchUser) refetchUser();
         }
     }, [paragraph, selectedTimeLimit, wpmHistory, paragraphId, refetchUser]);
 
@@ -295,7 +296,7 @@ export default function SoloPracticePage() {
         // 2. Finished within time limit (seconds <= selectedTimeLimit)
         // 3. Fully typed the paragraph text (correctLen === paragraph.length)
         const isFullyTyped = paragraph && paragraph.length > 0 && correctLen === paragraph.length;
-        const won = selectedTimeLimit > 0 && seconds <= selectedTimeLimit && isFullyTyped;
+        const won = isFullyTyped && (selectedTimeLimit === 0 || seconds <= selectedTimeLimit);
         setIsWin(won);
 
         // Force-refresh and fill final history datapoint
@@ -324,9 +325,10 @@ export default function SoloPracticePage() {
             if (res.data?.success && res.data?.data) {
                 setResult(res.data.data);
             }
-            if (refetchUser) refetchUser();
         } catch (err) {
             console.warn('Failed to save solo match:', err.message);
+        } finally {
+            if (refetchUser) refetchUser();
         }
     };
 
@@ -659,8 +661,8 @@ export default function SoloPracticePage() {
                                         { icon: '⏱️', label: 'Time Spent', value: `${elapsedTime}s`, color: 'var(--text-main)' },
                                         { icon: '📝', label: 'Words', value: `${selectedWordCount} words`, color: 'var(--text-main)' },
                                         ...(result ? [
-                                            { icon: '🥇', label: 'Total Wins', value: isWin ? `${result.wins || 0} (+1 Win Added!)` : `${result.wins || 0} (No Win Added)`, color: '#f59e0b' },
-                                            { icon: '🏁', label: 'Total Races', value: `${result.totalRaces || 0} Races (+1 Race)`, color: 'var(--text-main)' },
+                                            { icon: '🥇', label: 'Total Wins', value: `${result.wins || 0} (${result.winRatio || 0}%)`, color: '#f59e0b' },
+                                            { icon: '🏁', label: 'Total Races', value: `${result.totalRaces || 0} Races`, color: 'var(--text-main)' },
                                             { icon: '🎋', label: 'XP Gained', value: `+${result.xpGained} XP`, color: '#8b5cf6' }
                                         ] : [])
                                     ].map((stat) => (
