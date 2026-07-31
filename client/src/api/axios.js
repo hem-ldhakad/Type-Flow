@@ -3,8 +3,16 @@
 // When backend is connected, set VITE_API_URL in .env
 import axios from 'axios';
 
+const getApiBaseUrl = () => {
+    if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
+    if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+        return 'http://localhost:5001/api';
+    }
+    return '/api';
+};
+
 const api = axios.create({
-    baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5001/api',
+    baseURL: getApiBaseUrl(),
     timeout: 10000,
     headers: {
         'Content-Type': 'application/json',
