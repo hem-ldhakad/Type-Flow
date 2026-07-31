@@ -75,7 +75,7 @@ if (config.nodeEnv === 'development') {
 }
 
 // ── Health status ping endpoint ───────────────────────────────────────────────
-app.get('/health', (req, res) => {
+app.get(['/health', '/api/health'], (req, res) => {
     res.status(200).json({
         status: 'UP',
         environment: config.nodeEnv,
