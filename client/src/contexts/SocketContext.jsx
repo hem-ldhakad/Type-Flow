@@ -10,7 +10,7 @@ const getSocketUrl = () => {
     if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
         return 'http://localhost:5001';
     }
-    return typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5001';
+    return 'https://type-flow-production.up.railway.app';
 };
 
 const SOCKET_URL = getSocketUrl();
