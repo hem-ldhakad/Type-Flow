@@ -52,13 +52,13 @@ const globalLimiter = rateLimit({
     message: { success: false, message: 'Too many requests, please try again later.' },
 });
 
-// Auth-specific stricter limiter (prevent brute force)
+// Auth-specific limiter (relaxed for testing)
 const authLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000,
-    max: 20,
+    windowMs: 1 * 60 * 1000,             // 1 minute window
+    max: 500,                            // 500 attempts per minute
     standardHeaders: true,
     legacyHeaders: false,
-    message: { success: false, message: 'Too many authentication attempts, please try again in 15 minutes.' },
+    message: { success: false, message: 'Too many authentication attempts, please try again in a minute.' },
 });
 
 app.use('/api', globalLimiter);
