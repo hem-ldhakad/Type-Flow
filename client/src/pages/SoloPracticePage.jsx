@@ -655,29 +655,30 @@ export default function SoloPracticePage() {
                                             icon: isWin ? '🏆' : isTimeExpired ? '⏳' : '🎋',
                                             label: 'Outcome',
                                             value: isWin ? 'WIN (+1 Win)' : isTimeExpired ? 'Time Expired (No Win)' : 'Completed',
-                                            color: isWin ? '#10b981' : isTimeExpired ? '#ef4444' : '#8b5cf6'
+                                            color: isWin ? '#059669' : isTimeExpired ? '#dc2626' : '#7c3aed'
                                         },
-                                        { icon: '🎯', label: 'Accuracy', value: `${localAcc}%`, color: localAcc >= 95 ? '#10b981' : localAcc >= 80 ? '#f59e0b' : '#ef4444' },
-                                        { icon: '⏱️', label: 'Time Spent', value: `${elapsedTime}s`, color: 'var(--text-main)' },
-                                        { icon: '📝', label: 'Words', value: `${selectedWordCount} words`, color: 'var(--text-main)' },
+                                        { icon: '🎯', label: 'Accuracy', value: `${localAcc}%`, color: localAcc >= 95 ? '#059669' : localAcc >= 80 ? '#d97706' : '#dc2626' },
+                                        { icon: '⏱️', label: 'Time Spent', value: `${elapsedTime}s`, color: '#0f172a' },
+                                        { icon: '📝', label: 'Words', value: `${selectedWordCount} words`, color: '#0f172a' },
                                         ...(result ? [
-                                            { icon: '🥇', label: 'Total Wins', value: `${result.wins || 0} (${result.winRatio || 0}%)`, color: '#f59e0b' },
-                                            { icon: '🏁', label: 'Total Races', value: `${result.totalRaces || 0} Races`, color: 'var(--text-main)' },
-                                            { icon: '🎋', label: 'XP Gained', value: `+${result.xpGained} XP`, color: '#8b5cf6' }
+                                            { icon: '🥇', label: 'Total Wins', value: `${result.wins || 0} (${result.winRatio || 0}%)`, color: '#d97706' },
+                                            { icon: '🏁', label: 'Total Races', value: `${result.totalRaces || 0} Races`, color: '#0f172a' },
+                                            { icon: '🎋', label: 'XP Gained', value: `+${result.xpGained} XP`, color: '#7c3aed' }
                                         ] : [])
                                     ].map((stat) => (
                                         <div key={stat.label} style={{
                                             display: 'flex',
                                             justifyContent: 'space-between',
                                             alignItems: 'center',
-                                            padding: '0.6rem 0.75rem',
-                                            background: 'var(--surface-bg, #f9fafb)',
+                                            padding: '0.65rem 0.85rem',
+                                            background: '#f8fafc',
                                             borderRadius: '10px',
+                                            border: '1px solid #e2e8f0'
                                         }}>
-                                            <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                            <span style={{ fontSize: '0.9rem', color: '#475569', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
                                                 <span>{stat.icon}</span> {stat.label}
                                             </span>
-                                            <strong style={{ fontSize: '0.95rem', color: stat.color }}>{stat.value}</strong>
+                                            <strong style={{ fontSize: '0.95rem', color: stat.color, fontWeight: 700 }}>{stat.value}</strong>
                                         </div>
                                     ))}
                                 </div>
