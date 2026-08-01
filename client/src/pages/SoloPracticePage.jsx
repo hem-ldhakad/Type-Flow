@@ -658,11 +658,11 @@ export default function SoloPracticePage() {
                                             color: isWin ? '#059669' : isTimeExpired ? '#dc2626' : '#7c3aed'
                                         },
                                         { icon: '🎯', label: 'Accuracy', value: `${localAcc}%`, color: localAcc >= 95 ? '#059669' : localAcc >= 80 ? '#d97706' : '#dc2626' },
-                                        { icon: '⏱️', label: 'Time Spent', value: `${elapsedTime}s`, color: '#0f172a' },
-                                        { icon: '📝', label: 'Words', value: `${selectedWordCount} words`, color: '#0f172a' },
+                                        { icon: '⏱️', label: 'Time Spent', value: `${elapsedTime}s`, color: '#1e293b' },
+                                        { icon: '📝', label: 'Words', value: `${selectedWordCount} words`, color: '#0284c7' },
                                         ...(result ? [
                                             { icon: '🥇', label: 'Total Wins', value: `${result.wins || 0} (${result.winRatio || 0}%)`, color: '#d97706' },
-                                            { icon: '🏁', label: 'Total Races', value: `${result.totalRaces || 0} Races`, color: '#0f172a' },
+                                            { icon: '🏁', label: 'Total Races', value: `${result.totalRaces || 0} Races`, color: '#4f46e5' },
                                             { icon: '🎋', label: 'XP Gained', value: `+${result.xpGained} XP`, color: '#7c3aed' }
                                         ] : [])
                                     ].map((stat) => (
@@ -673,12 +673,12 @@ export default function SoloPracticePage() {
                                             padding: '0.65rem 0.85rem',
                                             background: '#f8fafc',
                                             borderRadius: '10px',
-                                            border: '1px solid #e2e8f0'
+                                            border: '1px solid #cbd5e1'
                                         }}>
-                                            <span style={{ fontSize: '0.9rem', color: '#475569', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                            <span style={{ fontSize: '0.9rem', color: '#334155', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
                                                 <span>{stat.icon}</span> {stat.label}
                                             </span>
-                                            <strong style={{ fontSize: '0.95rem', color: stat.color, fontWeight: 700 }}>{stat.value}</strong>
+                                            <strong style={{ fontSize: '0.95rem', color: stat.color, fontWeight: 800 }}>{stat.value}</strong>
                                         </div>
                                     ))}
                                 </div>
