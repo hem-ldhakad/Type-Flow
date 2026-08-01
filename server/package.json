@@ -7,10 +7,10 @@
     "scripts": {
         "start": "node src/server.js",
         "dev": "nodemon src/server.js",
-        "postinstall": "prisma generate",
-        "prisma:generate": "prisma generate",
-        "prisma:migrate": "prisma migrate dev",
-        "prisma:seed": "prisma db seed"
+        "postinstall": "npx prisma generate",
+        "prisma:generate": "npx prisma generate",
+        "prisma:migrate": "npx prisma migrate dev",
+        "prisma:seed": "node prisma/seed.js"
     },
     "prisma": {
         "seed": "node prisma/seed.js"
@@ -26,11 +26,11 @@
         "helmet": "^7.1.0",
         "jsonwebtoken": "^9.0.3",
         "morgan": "^1.10.0",
+        "prisma": "^5.17.0",
         "socket.io": "^4.8.3"
     },
     "devDependencies": {
         "nodemon": "^3.1.4",
-        "prisma": "^5.17.0",
         "socket.io-client": "^4.8.3"
     }
 }
