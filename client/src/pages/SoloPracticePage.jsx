@@ -603,25 +603,80 @@ export default function SoloPracticePage() {
                         {/* Title Banner */}
                         <div style={{
                             textAlign: 'center',
-                            marginBottom: '1.75rem'
+                            marginBottom: '1.5rem'
                         }}>
                             <span style={{ fontSize: '2.5rem' }}>
-                                {isWin ? '🏆' : isTimeExpired ? '⏳' : '🎋'}
+                                {isWin ? '🏆' : isTimeExpired ? '⏳' : localAcc < 100 ? '❌' : '🎋'}
                             </span>
                             <h2 style={{ margin: '0.25rem 0 0.5rem', fontSize: '1.75rem', fontWeight: 700 }}>
                                 {isWin
                                     ? 'Victory! You Beat the Timer!'
                                     : isTimeExpired
                                         ? 'Time Expired!'
-                                        : 'Practice Complete!'}
+                                        : localAcc < 100
+                                            ? 'Typos Detected — No Win!'
+                                            : 'Practice Complete!'}
                             </h2>
                             <p style={{ color: 'var(--text-muted)', margin: 0, fontSize: '0.95rem' }}>
                                 {isWin
-                                    ? `Finished within ${selectedTimeLimit}s limit — +1 Win added to your profile!`
+                                    ? `Finished within ${selectedTimeLimit}s limit with 100% accuracy — +1 Win added!`
                                     : isTimeExpired
                                         ? `Time limit of ${selectedTimeLimit}s expired before completion — No win recorded.`
-                                        : `Here's how you performed — ${selectedWordCount} words`}
+                                        : localAcc < 100
+                                            ? `You finished typing, but all words must be 100% green to win!`
+                                            : `Here's how you performed — ${selectedWordCount} words`}
                             </p>
+                        </div>
+
+                        {/* Explanatory Outcome Banner */}
+                        <div style={{
+                            marginBottom: '1.5rem',
+                            padding: '1rem 1.25rem',
+                            borderRadius: '14px',
+                            background: isWin
+                                ? 'linear-gradient(135deg, rgba(16,185,129,0.1), rgba(5,150,105,0.05))'
+                                : isTimeExpired
+                                    ? 'linear-gradient(135deg, rgba(239,68,68,0.1), rgba(220,38,38,0.05))'
+                                    : localAcc < 100
+                                        ? 'linear-gradient(135deg, rgba(245,158,11,0.12), rgba(217,119,6,0.05))'
+                                        : 'linear-gradient(135deg, rgba(99,102,241,0.1), rgba(124,58,237,0.05))',
+                            border: `1px solid ${isWin ? 'rgba(16,185,129,0.3)' : isTimeExpired ? 'rgba(239,68,68,0.3)' : localAcc < 100 ? 'rgba(245,158,11,0.35)' : 'rgba(99,102,241,0.3)'}`,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '1rem'
+                        }}>
+                            <span style={{ fontSize: '1.75rem', flexShrink: 0 }}>
+                                {isWin ? '🏆' : isTimeExpired ? '⏳' : localAcc < 100 ? '⚠️' : 'ℹ️'}
+                            </span>
+                            <div>
+                                <strong style={{
+                                    display: 'block',
+                                    fontSize: '0.95rem',
+                                    fontWeight: 700,
+                                    color: isWin ? '#047857' : isTimeExpired ? '#b91c1c' : localAcc < 100 ? '#b45309' : '#4338ca'
+                                }}>
+                                    {isWin
+                                        ? 'Win Claimed (+1 Win)'
+                                        : isTimeExpired
+                                            ? 'No Win: Timer Expired'
+                                            : localAcc < 100
+                                                ? 'No Win: All Words Must Be 100% Green'
+                                                : selectedTimeLimit === 0
+                                                    ? 'No Win: Timer Limit Turned Off'
+                                                    : 'Practice Completed'}
+                                </strong>
+                                <span style={{ fontSize: '0.85rem', color: '#475569', lineHeight: 1.4, display: 'block', marginTop: '2px' }}>
+                                    {isWin
+                                        ? `Great job! You beat the ${selectedTimeLimit}s timer limit with zero typos.`
+                                        : isTimeExpired
+                                            ? `You ran out of time before completing the test. Finish all words within ${selectedTimeLimit}s to earn a win!`
+                                            : localAcc < 100
+                                                ? `You finished with ${localAcc}% accuracy. To earn +1 Win, every word must be turned green (no uncorrected typos).`
+                                                : selectedTimeLimit === 0
+                                                    ? `To earn +1 Win, select a timer limit (e.g. 15s, 30s, 60s) before starting practice.`
+                                                    : `Practice complete.`}
+                                </span>
+                            </div>
                         </div>
 
                         {/* Side-by-Side Layout */}
@@ -652,12 +707,20 @@ export default function SoloPracticePage() {
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.5rem' }}>
                                     {[
                                         {
-                                            icon: isWin ? '🏆' : isTimeExpired ? '⏳' : '🎋',
+                                            icon: isWin ? '🏆' : isTimeExpired ? '⏳' : localAcc < 100 ? '❌' : '🎋',
                                             label: 'Outcome',
-                                            value: isWin ? 'WIN (+1 Win)' : isTimeExpired ? 'Time Expired (No Win)' : 'Completed',
-                                            color: isWin ? '#059669' : isTimeExpired ? '#dc2626' : '#7c3aed'
+                                            value: isWin
+                                                ? 'WIN (+1 Win)'
+                                                : isTimeExpired
+                                                    ? 'Time Expired (No Win)'
+                                                    : localAcc < 100
+                                                        ? 'Typos Found (No Win)'
+                                                        : selectedTimeLimit === 0
+                                                            ? 'Timer Off (No Win)'
+                                                            : 'Completed',
+                                            color: isWin ? '#059669' : '#dc2626'
                                         },
-                                        { icon: '🎯', label: 'Accuracy', value: `${localAcc}%`, color: localAcc >= 95 ? '#059669' : localAcc >= 80 ? '#d97706' : '#dc2626' },
+                                        { icon: '🎯', label: 'Accuracy', value: `${localAcc}%`, color: localAcc === 100 ? '#059669' : localAcc >= 80 ? '#d97706' : '#dc2626' },
                                         { icon: '⏱️', label: 'Time Spent', value: `${elapsedTime}s`, color: '#1e293b' },
                                         { icon: '📝', label: 'Words', value: `${selectedWordCount} words`, color: '#0284c7' },
                                         ...(result ? [
