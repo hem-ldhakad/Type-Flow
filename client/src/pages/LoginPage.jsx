@@ -49,9 +49,13 @@ export default function LoginPage() {
                 throw new Error('Authentication response did not contain user data.');
             }
         } catch (err) {
-            // Pull specific server error messages returned by registration middleware
-            const serverMsg = err.response?.data?.message || err.message;
-            setError(serverMsg || 'Sign in failed. Please check your credentials.');
+            // Pull specific server error messages or provide a helpful offline error message
+            if (!err.response || err.message === 'Network Error') {
+                setError('Unable to connect to server. Please ensure the backend server is running on port 5001.');
+            } else {
+                const serverMsg = err.response?.data?.message || err.message;
+                setError(serverMsg || 'Sign in failed. Please check your credentials.');
+            }
         } finally {
             setLoading(false);
         }

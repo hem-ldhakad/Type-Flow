@@ -65,8 +65,12 @@ export default function RegisterPage() {
                 throw new Error('Registration response did not contain user data.');
             }
         } catch (err) {
-            const serverMsg = err.response?.data?.message || err.message;
-            setError(serverMsg || 'Registration failed. Please try again.');
+            if (!err.response || err.message === 'Network Error') {
+                setError('Unable to connect to server. Please ensure the backend server is running on port 5001.');
+            } else {
+                const serverMsg = err.response?.data?.message || err.message;
+                setError(serverMsg || 'Registration failed. Please try again.');
+            }
         } finally {
             setLoading(false);
         }
