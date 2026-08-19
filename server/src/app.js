@@ -35,7 +35,7 @@ app.use(cors({
         // Allow requests without an origin (e.g. server-to-server, Postman in dev)
         if (!origin) return callback(null, true);
         if (!config.isProduction) return callback(null, true);
-        if (allowedOrigins.includes('*') || allowedOrigins.includes(origin)) return callback(null, true);
+        if (allowedOrigins.length === 0 || allowedOrigins.includes('*') || allowedOrigins.includes(origin)) return callback(null, true);
         callback(new Error(`CORS: Origin '${origin}' not allowed.`));
     },
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
