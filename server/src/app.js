@@ -68,6 +68,7 @@ if (config.nodeEnv === 'development') {
 app.get(['/health', '/api/health'], (req, res) => {
     res.status(200).json({
         status: 'UP',
+        version: 'v2-cors-fixed',
         environment: config.nodeEnv,
         timestamp: new Date().toISOString(),
         uptime: Math.round(process.uptime()),
