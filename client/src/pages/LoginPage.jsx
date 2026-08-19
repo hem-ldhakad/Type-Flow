@@ -53,7 +53,7 @@ export default function LoginPage() {
             if (err.response?.status === 405) {
                 setError('API endpoint error (405 Method Not Allowed). Please ensure VITE_API_URL is configured in your deployment settings.');
             } else if (!err.response || err.message === 'Network Error') {
-                setError('Unable to connect to server. Please ensure the backend server is running on port 5001.');
+                setError('Unable to connect to the backend server. Please ensure VITE_API_URL is set correctly and the server is running on Render.');
             } else {
                 const serverMsg = err.response?.data?.message || err.message;
                 setError(serverMsg || 'Sign in failed. Please check your credentials.');
