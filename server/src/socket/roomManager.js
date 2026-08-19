@@ -223,7 +223,7 @@ export const updatePlayerProgress = (roomId, userId, typedText, totalKeystrokes)
         member.wpmHistory.push(wpm);
     }
 
-    if (typedLen === paragraphLen && correctLength === paragraphLen) {
+    if (typedLen >= paragraphLen) {
         member.finished = true;
         member.finishedAt = Date.now();
         member.wpmHistory[secondIndex] = wpm; // ensure final WPM is correct
@@ -269,13 +269,30 @@ export const getRaceResults = (roomId) => {
 
     results.sort((a, b) => {
         if (a.finished !== b.finished) return a.finished ? -1 : 1;
-        if (a.finished) return a.finishedAt - b.finishedAt;
-        if (a.progress !== b.progress) return b.progress - a.progress;
-        return b.wpm - a.wpm;
+
+        // Calculate Net WPM (WPM * Accuracy %) to factor accuracy directly into rank
+        const netWpmA = (a.wpm || 0) * ((a.accuracy || 0) / 100);
+        const netWpmB = (b.wpm || 0) * ((b.accuracy || 0) / 100);
+
+        if (Math.abs(netWpmB - netWpmA) > 0.5) {
+            return netWpmB - netWpmA; // Higher Net WPM (Speed + Accuracy) wins
+        }
+
+        // Tie-breaker 1: Accuracy
+        if (a.accuracy !== b.accuracy) {
+            return b.accuracy - a.accuracy; // Higher accuracy wins
+        }
+
+        // Tie-breaker 2: Finished time / Progress
+        if (a.finished) {
+            return a.finishedAt - b.finishedAt;
+        }
+
+        return b.progress - a.progress;
     });
 
     return results.map((res, index) => ({
         ...res,
-        position: res.finished ? (index + 1) : (index + 2)
+        position: index + 1
     }));
 };
