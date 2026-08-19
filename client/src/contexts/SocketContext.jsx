@@ -10,10 +10,10 @@ const getSocketUrl = () => {
     if (socketUrl) {
         return socketUrl.replace(/\/+$/, '').replace(/\/api$/, '');
     }
-    if (typeof window !== 'undefined') {
-        return window.location.origin.includes('localhost') ? 'http://localhost:5001' : window.location.origin;
+    if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+        return 'http://localhost:5001';
     }
-    return 'http://localhost:5001';
+    return 'https://type-flow-y2eu.onrender.com';
 };
 
 const SOCKET_URL = getSocketUrl();
