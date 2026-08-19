@@ -26,18 +26,8 @@ if (config.isProduction) {
 }
 
 // ── Cross-Origin access rules ─────────────────────────────────────────────────
-const allowedOrigins = config.corsOrigin
-    ? config.corsOrigin.split(',').map((o) => o.trim())
-    : [];
-
 app.use(cors({
-    origin: (origin, callback) => {
-        // Allow requests without an origin (e.g. server-to-server, Postman in dev)
-        if (!origin) return callback(null, true);
-        if (!config.isProduction) return callback(null, true);
-        if (allowedOrigins.length === 0 || allowedOrigins.includes('*') || allowedOrigins.includes(origin)) return callback(null, true);
-        callback(new Error(`CORS: Origin '${origin}' not allowed.`));
-    },
+    origin: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
