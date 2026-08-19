@@ -1,5 +1,6 @@
 // src/pages/HomePage.jsx
 import { Link } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import styles from './HomePage.module.css';
 
 const features = [
@@ -10,13 +11,19 @@ const features = [
 ];
 
 export default function HomePage() {
+    const { user, isAuthenticated } = useAuth();
+
     return (
         <div className={styles.page}>
             {/* Hero */}
             <section className={styles.hero}>
                 <div className="container">
                     <div className={styles.heroBadge}>
-                        <span className="badge badge-green">🎋 Season 1 Live</span>
+                        {isAuthenticated ? (
+                            <span className="badge badge-green">🐼 Welcome back, {user?.username}! • Level {user?.level || 1}</span>
+                        ) : (
+                            <span className="badge badge-green">🎋 Season 1 Live</span>
+                        )}
                     </div>
                     <h1 className={styles.heroTitle}>
                         Type Fast.<br />
@@ -26,12 +33,25 @@ export default function HomePage() {
                         Multiplayer typing races with real-time competition, stats tracking, and a cute panda cheering you on.
                     </p>
                     <div className={styles.heroCta}>
-                        <Link to="/register" className="btn btn-primary" style={{ fontSize: '1rem', padding: '0.8rem 2rem' }}>
-                            🐼 Start Typing Free
-                        </Link>
-                        <Link to="/login" className="btn btn-ghost" style={{ fontSize: '1rem', padding: '0.8rem 1.5rem' }}>
-                            Sign in
-                        </Link>
+                        {isAuthenticated ? (
+                            <>
+                                <Link to="/dashboard" className="btn btn-primary" style={{ fontSize: '1rem', padding: '0.8rem 2rem' }}>
+                                    🎮 Go to Dashboard
+                                </Link>
+                                <Link to="/race/solo" className="btn btn-ghost" style={{ fontSize: '1rem', padding: '0.8rem 1.5rem' }}>
+                                    ⚡ Solo Practice
+                                </Link>
+                            </>
+                        ) : (
+                            <>
+                                <Link to="/register" className="btn btn-primary" style={{ fontSize: '1rem', padding: '0.8rem 2rem' }}>
+                                    🐼 Start Typing Free
+                                </Link>
+                                <Link to="/login" className="btn btn-ghost" style={{ fontSize: '1rem', padding: '0.8rem 1.5rem' }}>
+                                    Sign in
+                                </Link>
+                            </>
+                        )}
                     </div>
                     {/* Decorative panda */}
                     <div className={styles.pandaDecor} aria-hidden>🐼</div>

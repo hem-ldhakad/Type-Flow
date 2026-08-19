@@ -294,6 +294,10 @@ export default function RacePage() {
         on('error', handleSocketError);
 
         return () => {
+            // Cleanly leave room on unmount (e.g. when user clicks Leaderboard or navigates away)
+            if (roomId && emit) {
+                emit('leave-room', { roomId });
+            }
             // Reset join tracker on unmount/disconnect to enable rejoining on reconnect restoration
             joinedRef.current = false;
             off('room-joined', handleRoomJoined);
