@@ -65,7 +65,9 @@ export default function RegisterPage() {
                 throw new Error('Registration response did not contain user data.');
             }
         } catch (err) {
-            if (!err.response || err.message === 'Network Error') {
+            if (err.response?.status === 405) {
+                setError('API endpoint error (405 Method Not Allowed). Please ensure VITE_API_URL is configured in your deployment settings.');
+            } else if (!err.response || err.message === 'Network Error') {
                 setError('Unable to connect to server. Please ensure the backend server is running on port 5001.');
             } else {
                 const serverMsg = err.response?.data?.message || err.message;

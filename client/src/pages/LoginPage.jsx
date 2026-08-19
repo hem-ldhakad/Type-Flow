@@ -50,7 +50,9 @@ export default function LoginPage() {
             }
         } catch (err) {
             // Pull specific server error messages or provide a helpful offline error message
-            if (!err.response || err.message === 'Network Error') {
+            if (err.response?.status === 405) {
+                setError('API endpoint error (405 Method Not Allowed). Please ensure VITE_API_URL is configured in your deployment settings.');
+            } else if (!err.response || err.message === 'Network Error') {
                 setError('Unable to connect to server. Please ensure the backend server is running on port 5001.');
             } else {
                 const serverMsg = err.response?.data?.message || err.message;

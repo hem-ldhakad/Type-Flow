@@ -6,11 +6,14 @@ import { useAuth } from './AuthContext';
 const SocketContext = createContext(null);
 
 const getSocketUrl = () => {
-    if (import.meta.env.VITE_SOCKET_URL) return import.meta.env.VITE_SOCKET_URL;
-    if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
-        return 'http://localhost:5001';
+    let socketUrl = import.meta.env.VITE_SOCKET_URL || import.meta.env.VITE_API_URL;
+    if (socketUrl) {
+        return socketUrl.replace(/\/+$/, '').replace(/\/api$/, '');
     }
-    return 'https://type-flow-production.up.railway.app';
+    if (typeof window !== 'undefined') {
+        return window.location.origin.includes('localhost') ? 'http://localhost:5001' : window.location.origin;
+    }
+    return 'http://localhost:5001';
 };
 
 const SOCKET_URL = getSocketUrl();

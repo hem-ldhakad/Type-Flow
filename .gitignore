@@ -1,3 +1,5 @@
 # Environment variables
 server/.env
 server/.env.example
+/generated/prisma
+node_modules
