@@ -97,7 +97,8 @@ const typing = async (io, socket, payload) => {
         io.to(roomId).emit('progress-update', {
             userId,
             progressPercentage: update.progress,
-            currentWpm: update.wpm
+            currentWpm: update.wpm,
+            accuracy: update.accuracy
         });
 
         // Completion check triggers

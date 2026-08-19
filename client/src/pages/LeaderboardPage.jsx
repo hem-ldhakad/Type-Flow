@@ -117,7 +117,8 @@ export default function LeaderboardPage() {
                                     <th style={{ width: 60 }}>Rank</th>
                                     <th>Player</th>
                                     <th>Level</th>
-                                    <th>Avg WPM</th>
+                                    <th>Avg Speed</th>
+                                    <th>Accuracy</th>
                                     <th>Peak WPM</th>
                                     <th>Races</th>
                                     <th>Wins</th>
@@ -143,7 +144,8 @@ export default function LeaderboardPage() {
                                             <td>
                                                 <span className="badge badge-green">Lvl {p.level}</span>
                                             </td>
-                                            <td className={styles.wpmCell}>{p.avgWpm}</td>
+                                            <td className={styles.wpmCell}>{p.avgWpm} WPM</td>
+                                            <td className={styles.wpmCell}>{p.avgAccuracy}%</td>
                                             <td className={styles.peakCell}>{p.peakWpm}</td>
                                             <td>{p.totalRaces}</td>
                                             <td>{p.wins}</td>

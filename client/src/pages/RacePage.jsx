@@ -249,7 +249,7 @@ export default function RacePage() {
             setMembers((prev) =>
                 prev.map((m) =>
                     m.userId === payload.userId
-                        ? { ...m, progress: payload.progressPercentage, wpm: payload.currentWpm }
+                        ? { ...m, progress: payload.progressPercentage, wpm: payload.currentWpm, accuracy: payload.accuracy ?? m.accuracy }
                         : m
                 )
             );
@@ -612,7 +612,7 @@ export default function RacePage() {
                                                     {m.finished && <span className={styles.finishedMarker}>✓ Finished</span>}
                                                 </span>
                                                 <span className={styles.racerWpm}>
-                                                    {m.wpm > 0 ? `${m.wpm} WPM` : '0 WPM'}
+                                                    {m.wpm > 0 ? `${m.wpm} WPM` : '0 WPM'} • {m.accuracy ?? 100}% ACC
                                                 </span>
                                             </div>
                                             <div className={styles.bar}>

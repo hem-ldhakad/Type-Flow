@@ -43,6 +43,7 @@ export const getUserStats = async (req, res, next) => {
             const sumAccuracy = matchResults.reduce((acc, curr) => acc + curr.accuracy, 0);
 
             averageWpm = Math.round(sumWpm / totalRaces);
+            averageAccuracy = Math.round(sumAccuracy / totalRaces);
             peakWpm = Math.max(...matchResults.map(r => r.wpm));
             wins = matchResults.filter(r => r.position === 1).length;
         }
@@ -73,7 +74,7 @@ export const getUserStats = async (req, res, next) => {
 
 /**
  * GET /api/users/leaderboard?period=all|week
- * Returns top-50 players ranked by average WPM. Public endpoint.
+ * Returns top-50 players ranked by Net WPM (Speed + Accuracy). Public endpoint.
  */
 export const getLeaderboard = async (req, res, next) => {
     try {
@@ -111,6 +112,7 @@ export const getLeaderboard = async (req, res, next) => {
                     totalRaces: 0,
                     wins: 0,
                     totalWpm: 0,
+                    totalAccuracy: 0,
                     peakWpm: 0,
                 });
             }
@@ -118,17 +120,25 @@ export const getLeaderboard = async (req, res, next) => {
             p.totalRaces++;
             if (r.position === 1) p.wins++;
             p.totalWpm += r.wpm;
+            p.totalAccuracy += (r.accuracy || 100);
             if (r.wpm > p.peakWpm) p.peakWpm = r.wpm;
         }
 
         // Build sorted leaderboard array
         const leaderboard = Array.from(playerMap.values())
             .filter((p) => p.totalRaces > 0)
-            .map((p) => ({
-                ...p,
-                avgWpm: Math.round(p.totalWpm / p.totalRaces),
-            }))
-            .sort((a, b) => b.avgWpm - a.avgWpm || b.totalRaces - a.totalRaces)
+            .map((p) => {
+                const avgWpm = Math.round(p.totalWpm / p.totalRaces);
+                const avgAccuracy = Math.round(p.totalAccuracy / p.totalRaces);
+                const netWpm = Math.round(avgWpm * (avgAccuracy / 100));
+                return {
+                    ...p,
+                    avgWpm,
+                    avgAccuracy,
+                    netWpm,
+                };
+            })
+            .sort((a, b) => b.netWpm - a.netWpm || b.avgWpm - a.avgWpm || b.avgAccuracy - a.avgAccuracy || b.totalRaces - a.totalRaces)
             .slice(0, 50)
             .map((p, i) => ({ ...p, rank: i + 1 }));
 
