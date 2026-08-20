@@ -5,12 +5,19 @@ export const saveMatchResults = async (roomId, room) => {
     const results = roomManager.getRaceResults(roomId);
 
     return prisma.$transaction(async (tx) => {
+        let pId = room.paragraphId;
+        const exists = pId ? await tx.paragraph.findUnique({ where: { id: pId } }) : null;
+        if (!exists) {
+            const firstP = await tx.paragraph.findFirst();
+            pId = firstP?.id;
+        }
+
         // 1. Create central Match record
         const match = await tx.match.create({
             data: {
                 roomId: roomId,
-                paragraphId: room.paragraphId,
-                startedAt: new Date(room.matchStartedAt),
+                paragraphId: pId,
+                startedAt: new Date(room.matchStartedAt || Date.now()),
                 endedAt: new Date()
             }
         });
@@ -76,8 +83,6 @@ export const saveMatchResults = async (roomId, room) => {
 export const finalizeMatch = async (io, roomId, room) => {
     if (!room || room.status !== 'RACING') return;
 
-    roomManager.clearFinishGraceTimer(roomId);
-    roomManager.clearMaxRaceTimer(roomId);
     roomManager.forceFinishAll(roomId);
 
     const inMemoryResults = roomManager.getRaceResults(roomId);
@@ -148,20 +153,6 @@ const typing = async (io, socket, payload) => {
             if (roomManager.allFinished(roomId)) {
                 console.log(`[Socket]: All players finished. Finalizing match for room ${roomId}...`);
                 await finalizeMatch(io, roomId, room);
-            } else if (!room.finishGraceTimer) {
-                // First player finished — start a 15-second grace timer for remaining players
-                console.log(`[Socket]: First player finished. Starting 15s grace period timer for room ${roomId}...`);
-                io.to(roomId).emit('race-grace-period', { seconds: 15 });
-
-                const graceTimer = setTimeout(async () => {
-                    console.log(`[Socket]: 15s grace timer expired for room ${roomId}. Force completing match.`);
-                    const activeRoom = roomManager.getRoom(roomId);
-                    if (activeRoom && activeRoom.status === 'RACING') {
-                        await finalizeMatch(io, roomId, activeRoom);
-                    }
-                }, 15000);
-
-                roomManager.setFinishGraceTimer(roomId, graceTimer);
             }
         }
     } catch (err) {

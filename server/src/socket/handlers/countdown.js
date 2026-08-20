@@ -49,17 +49,6 @@ export const startCountdown = (io, roomId) => {
             roomManager.setCountdownTimer(roomId, null);
             roomManager.startRace(roomId, paragraph.id, paragraphText);
 
-            // Set max race timer (90s) to ensure match completes even if all players stop typing
-            const maxTimer = setTimeout(async () => {
-                console.log(`[Socket]: Max race duration timer (90s) expired for room ${roomId}. Force finalizing match.`);
-                const activeRoom = roomManager.getRoom(roomId);
-                if (activeRoom && activeRoom.status === 'RACING') {
-                    const { finalizeMatch } = await import('./typing.js');
-                    await finalizeMatch(io, roomId, activeRoom);
-                }
-            }, 90000);
-            roomManager.setMaxRaceTimer(roomId, maxTimer);
-
             io.to(roomId).emit('game-start', {
                 paragraphId: paragraph.id,
                 paragraphText

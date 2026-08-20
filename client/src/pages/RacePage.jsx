@@ -39,7 +39,6 @@ export default function RacePage() {
 
     // Standings results array
     const [matchResults, setMatchResults] = useState([]);
-    const [graceSecs, setGraceSecs] = useState(null);
     const [copiedCode, setCopiedCode] = useState(false);
     const [copiedLink, setCopiedLink] = useState(false);
     const [showShareDropdown, setShowShareDropdown] = useState(false);
@@ -230,6 +229,20 @@ export default function RacePage() {
         const handleGameStart = (payload) => {
             console.log('[Socket] game-start:', payload);
             setRoomStatus('RACING');
+            setMatchResults([]);
+
+            // Reset member states for new race
+            setMembers((prev) =>
+                prev.map((m) => ({
+                    ...m,
+                    isReady: false,
+                    progress: 0,
+                    wpm: 0,
+                    accuracy: 100,
+                    finished: false,
+                    rank: undefined
+                }))
+            );
 
             // Re-apply client side casing normalization as a fallback precaution
             let text = payload.paragraphText || '';
@@ -260,7 +273,7 @@ export default function RacePage() {
                             progress: payload.finished ? 100 : payload.progressPercentage,
                             wpm: payload.currentWpm,
                             accuracy: payload.accuracy ?? m.accuracy,
-                            finished: m.finished || !!payload.finished || payload.progressPercentage >= 100
+                            finished: Boolean(payload.finished || (payload.progressPercentage >= 100))
                           }
                         : m
                 )
@@ -278,15 +291,9 @@ export default function RacePage() {
             );
         };
 
-        const handleRaceGracePeriod = (payload) => {
-            console.log('[Socket] race-grace-period:', payload);
-            setGraceSecs(payload.seconds);
-        };
-
         const handleGameEnd = (payload) => {
             console.log('[Socket] game-end:', payload);
             setRoomStatus('COMPLETE');
-            setGraceSecs(null);
             setMatchResults(payload.results || []);
             if (refetchUser) refetchUser();
         };
@@ -308,7 +315,6 @@ export default function RacePage() {
         on('game-start', handleGameStart);
         on('progress-update', handleProgressUpdate);
         on('player-finished', handlePlayerFinished);
-        on('race-grace-period', handleRaceGracePeriod);
         on('game-end', handleGameEnd);
         on('error', handleSocketError);
 
@@ -326,7 +332,6 @@ export default function RacePage() {
             off('game-start', handleGameStart);
             off('progress-update', handleProgressUpdate);
             off('player-finished', handlePlayerFinished);
-            off('race-grace-period', handleRaceGracePeriod);
             off('game-end', handleGameEnd);
             off('error', handleSocketError);
         };
@@ -338,23 +343,6 @@ export default function RacePage() {
             inputRef.current.focus();
         }
     }, [roomStatus]);
-
-    // Grace timer tick
-    useEffect(() => {
-        if (graceSecs === null || graceSecs <= 0) return;
-
-        const interval = setInterval(() => {
-            setGraceSecs((prev) => {
-                if (prev === null || prev <= 1) {
-                    clearInterval(interval);
-                    return 0;
-                }
-                return prev - 1;
-            });
-        }, 1000);
-
-        return () => clearInterval(interval);
-    }, [graceSecs]);
 
     // Live timer tick and metrics updates during RACING status
     useEffect(() => {
@@ -539,13 +527,13 @@ export default function RacePage() {
     const isMeReady = !!myMember?.isReady;
     const currentRacerFinished = Boolean(paragraph && typedText.length >= paragraph.length);
 
-    // Guaranteed finish transition: if all racers have completed their text, show results immediately
-    const allRacersFinished = members.length > 0 && members.every((m) => {
+    // Guaranteed finish transition: ONLY show results when ALL racers have completed their text
+    const allRacersFinished = members.length >= 2 && members.every((m) => {
         const isCurrentPl = m.userId === user?.id;
         return Boolean(m.finished || (isCurrentPl && currentRacerFinished));
     });
 
-    const isMatchComplete = roomStatus === 'COMPLETE' || allRacersFinished;
+    const isMatchComplete = roomStatus === 'COMPLETE' || (roomStatus === 'RACING' && allRacersFinished);
 
     const displayResults = (matchResults && matchResults.length > 0)
         ? matchResults
@@ -731,23 +719,6 @@ export default function RacePage() {
                 {/* ── Active Typing / Race View Screen ── */}
                 {roomStatus === 'RACING' && !isMatchComplete && (
                     <div className={styles.raceLayout}>
-                        {/* Grace period banner if a racer has finished */}
-                        {graceSecs !== null && (
-                            <div style={{
-                                gridColumn: '1 / -1',
-                                padding: '0.85rem 1.25rem',
-                                background: 'linear-gradient(135deg, rgba(245,158,11,0.15), rgba(217,119,6,0.08))',
-                                border: '1px solid rgba(245,158,11,0.4)',
-                                borderRadius: '12px',
-                                color: '#b45309',
-                                fontWeight: 700,
-                                textAlign: 'center',
-                                fontSize: '0.95rem'
-                            }}>
-                                ⏳ First racer finished! Race ending in <strong>{graceSecs}s</strong>... Finish up your text!
-                            </div>
-                        )}
-
                         {/* Competitor Standings / Progress Bars */}
                         <div className={`card ${styles.progressCard}`}>
                             <h2 className={styles.sectionLabel}>Competitors Progress</h2>
@@ -815,10 +786,7 @@ export default function RacePage() {
                                 </div>
                             )}
 
-                            <div className={styles.typingFooter}>
-                                <span className={styles.timer}>
-                                    Time: <strong>{elapsedTime}s</strong>
-                                </span>
+                            <div className={styles.typingFooter} style={{ justifyContent: 'flex-end' }}>
                                 <div className={styles.liveStats}>
                                     <span>WPM: <strong>{localWpm}</strong></span>
                                     <span>ACC: <strong>{localAcc}%</strong></span>

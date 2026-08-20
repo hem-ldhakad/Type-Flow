@@ -124,32 +124,6 @@ export const clearCountdown = (roomId) => {
     }
 };
 
-export const setFinishGraceTimer = (roomId, timer) => {
-    const room = rooms.get(roomId);
-    if (room) room.finishGraceTimer = timer;
-};
-
-export const clearFinishGraceTimer = (roomId) => {
-    const room = rooms.get(roomId);
-    if (room && room.finishGraceTimer) {
-        clearInterval(room.finishGraceTimer);
-        room.finishGraceTimer = null;
-    }
-};
-
-export const setMaxRaceTimer = (roomId, timer) => {
-    const room = rooms.get(roomId);
-    if (room) room.maxRaceTimer = timer;
-};
-
-export const clearMaxRaceTimer = (roomId) => {
-    const room = rooms.get(roomId);
-    if (room && room.maxRaceTimer) {
-        clearInterval(room.maxRaceTimer);
-        room.maxRaceTimer = null;
-    }
-};
-
 // ── Reverse lookup ─────────────────────────────────────────────────────────────
 
 export const getRoomBySocketId = (socketId) => {
@@ -193,9 +167,6 @@ export const getMembersArray = (roomId) => {
 export const startRace = (roomId, paragraphId, paragraphText) => {
     const room = rooms.get(roomId);
     if (!room) return;
-
-    clearFinishGraceTimer(roomId);
-    clearMaxRaceTimer(roomId);
 
     room.status = 'RACING';
     room.paragraphId = paragraphId;
