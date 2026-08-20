@@ -1,7 +1,7 @@
 import * as roomManager from '../roomManager.js';
 import prisma from '../../prisma.js';
 
-const saveMatchResults = async (roomId, room) => {
+export const saveMatchResults = async (roomId, room) => {
     const results = roomManager.getRaceResults(roomId);
 
     return prisma.$transaction(async (tx) => {
@@ -40,11 +40,13 @@ const saveMatchResults = async (roomId, room) => {
                 // Base finishing reward: +20 XP
                 // Position 1 (Winner) multiplier: +50 XP
                 // Speed modifier: +1 XP per 5 WPM
+                // Accuracy bonus: +15 XP for 100% accuracy, +10 XP for >= 90% accuracy
                 const baseXP = 20;
                 const winnerXP = player.position === 1 ? 50 : 0;
                 const speedXP = Math.floor(player.wpm / 5);
+                const accuracyXP = player.accuracy >= 100 ? 15 : player.accuracy >= 90 ? 10 : 0;
 
-                const rewardXP = baseXP + winnerXP + speedXP;
+                const rewardXP = baseXP + winnerXP + speedXP + accuracyXP;
                 let newXp = user.xp + rewardXP;
                 let newLevel = user.level;
 
@@ -71,12 +73,36 @@ const saveMatchResults = async (roomId, room) => {
     });
 };
 
+export const finalizeMatch = async (io, roomId, room) => {
+    if (!room || room.status !== 'RACING') return;
+
+    roomManager.clearFinishGraceTimer(roomId);
+    roomManager.clearMaxRaceTimer(roomId);
+    roomManager.forceFinishAll(roomId);
+
+    const inMemoryResults = roomManager.getRaceResults(roomId);
+    roomManager.setStatus(roomId, 'LOBBY');
+
+    io.to(roomId).emit('game-end', {
+        results: inMemoryResults
+    });
+
+    console.log(`[Socket]: Race ended in room ${roomId}. Standings broadcasted.`);
+
+    try {
+        const summary = await saveMatchResults(roomId, room);
+        console.log(`[Socket]: Match ${summary.matchId} saved to DB for room ${roomId}.`);
+    } catch (dbError) {
+        console.error('[Socket][typing] DB save failed (results already sent to clients):', dbError);
+    }
+};
+
 const typing = async (io, socket, payload) => {
     try {
-        const { roomId, typedText, totalKeystrokes } = payload;
+        const { roomId, typedText, totalKeystrokes, isFinished } = payload;
         const { id: userId } = socket.user;
 
-        console.log(`[Socket][typing] received from ${userId}, roomId=${roomId}, len=${typedText?.length}`);
+        console.log(`[Socket][typing] received from ${userId}, roomId=${roomId}, len=${typedText?.length}, isFinished=${isFinished}`);
 
         const room = roomManager.getRoom(roomId);
         if (!room) {
@@ -90,7 +116,7 @@ const typing = async (io, socket, payload) => {
         }
 
         // Call authoritative helper to update metric states in mem-cache
-        const update = roomManager.updatePlayerProgress(roomId, userId, typedText, totalKeystrokes);
+        const update = roomManager.updatePlayerProgress(roomId, userId, typedText, totalKeystrokes, !!isFinished);
         if (!update) return;
 
         // Broadcast standard progress update to all other room members
@@ -98,7 +124,8 @@ const typing = async (io, socket, payload) => {
             userId,
             progressPercentage: update.progress,
             currentWpm: update.wpm,
-            accuracy: update.accuracy
+            accuracy: update.accuracy,
+            finished: update.finished
         });
 
         // Completion check triggers
@@ -119,28 +146,22 @@ const typing = async (io, socket, payload) => {
 
             // If all players are done typing, trigger database persist and terminate matching state
             if (roomManager.allFinished(roomId)) {
-                console.log(`[Socket]: All players finished. Saving match results for room ${roomId}...`);
+                console.log(`[Socket]: All players finished. Finalizing match for room ${roomId}...`);
+                await finalizeMatch(io, roomId, room);
+            } else if (!room.finishGraceTimer) {
+                // First player finished — start a 15-second grace timer for remaining players
+                console.log(`[Socket]: First player finished. Starting 15s grace period timer for room ${roomId}...`);
+                io.to(roomId).emit('race-grace-period', { seconds: 15 });
 
-                // Capture in-memory results before any async operations
-                const inMemoryResults = roomManager.getRaceResults(roomId);
+                const graceTimer = setTimeout(async () => {
+                    console.log(`[Socket]: 15s grace timer expired for room ${roomId}. Force completing match.`);
+                    const activeRoom = roomManager.getRoom(roomId);
+                    if (activeRoom && activeRoom.status === 'RACING') {
+                        await finalizeMatch(io, roomId, activeRoom);
+                    }
+                }, 15000);
 
-                // Reset room status immediately so players can see COMPLETE screen
-                roomManager.setStatus(roomId, 'LOBBY');
-
-                // Always emit game-end with in-memory results so the UI always shows
-                io.to(roomId).emit('game-end', {
-                    results: inMemoryResults
-                });
-
-                console.log(`[Socket]: Race ended in room ${roomId}. Standings broadcasted.`);
-
-                // Persist to DB asynchronously — UI already shown, so failures are non-blocking
-                try {
-                    const summary = await saveMatchResults(roomId, room);
-                    console.log(`[Socket]: Match ${summary.matchId} saved to DB for room ${roomId}.`);
-                } catch (dbError) {
-                    console.error('[Socket][typing] DB save failed (results already sent to clients):', dbError);
-                }
+                roomManager.setFinishGraceTimer(roomId, graceTimer);
             }
         }
     } catch (err) {
@@ -150,3 +171,4 @@ const typing = async (io, socket, payload) => {
 };
 
 export default typing;
+

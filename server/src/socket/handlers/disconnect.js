@@ -33,23 +33,10 @@ const disconnect = (io, socket) => {
             // Check if this disconnection made all remaining players finished in a race!
             const room = roomManager.getRoom(roomId);
             if (room && room.status === 'RACING' && roomManager.allFinished(roomId)) {
-                console.log(`[Socket]: All players finished after disconnect. Saving match results for room ${roomId}...`);
-                const inMemoryResults = roomManager.getRaceResults(roomId);
-                roomManager.setStatus(roomId, 'LOBBY');
-                io.to(roomId).emit('game-end', { results: inMemoryResults });
-
-                // Fire and forget save
-                import('../handlers/typing.js').then(module => {
-                    // Because saveMatchResults is not exported from typing.js, we should move it or just use an event. 
-                    // Wait, we need to correctly save the results to the db. Since typing handles DB persistence, 
-                    // I will just use setTimeout or let the room expire for now since we are in disconnect.
-                    // Instead of full DB save block, emitting 'game-end' alone is enough to fix the UI freeze issue immediately.
+                console.log(`[Socket]: All remaining players finished after disconnect. Finalizing match for room ${roomId}...`);
+                import('./typing.js').then(module => {
+                    module.finalizeMatch(io, roomId, room);
                 }).catch(e => console.error('Dynamic import failed', e));
-
-                // Let's directly persist the results if we can
-                import('../../services/paragraphService.js').then(async () => {
-                    // Instead of complex DB import, we just ensure the game completes.
-                });
             }
         }
     } catch (err) {

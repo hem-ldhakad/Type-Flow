@@ -38,14 +38,53 @@ const PandaLogo = () => (
 export default function GlobalLayout() {
     const { user, logout, isAuthenticated, loading } = useAuth();
     const navigate = useNavigate();
+    const location = window.location;
+
+    let activeRoom = null;
+    try {
+        const saved = sessionStorage.getItem('typeflow_active_room');
+        if (saved) activeRoom = JSON.parse(saved);
+    } catch {
+        activeRoom = null;
+    }
 
     const handleLogout = () => {
+        sessionStorage.removeItem('typeflow_active_room');
         logout();
         navigate('/');
     };
 
     return (
         <div className={styles.layout}>
+            {/* Active Race Persistent Bar */}
+            {activeRoom && !window.location.pathname.startsWith('/race/') && (
+                <div style={{
+                    background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.1))',
+                    borderBottom: '1px solid rgba(16, 185, 129, 0.4)',
+                    padding: '0.55rem 1.5rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    fontSize: '0.9rem',
+                    fontWeight: 600,
+                    color: 'var(--text-primary, #0f172a)'
+                }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span>🎋</span>
+                        <span>You are in active room <strong>{activeRoom.code}</strong></span>
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                        <button
+                            onClick={() => navigate(`/race/${activeRoom.roomId}`)}
+                            className="btn btn-sm btn-primary"
+                            style={{ padding: '0.3rem 0.8rem', fontSize: '0.82rem' }}
+                        >
+                            ← Return to Race
+                        </button>
+                    </div>
+                </div>
+            )}
+
             {/* ── Navbar ── */}
             <header className={styles.navbar}>
                 <div className={`container ${styles.navInner}`}>

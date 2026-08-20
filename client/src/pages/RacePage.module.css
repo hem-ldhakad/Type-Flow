@@ -435,12 +435,17 @@
 }
 
 .finishedMarker {
-    font-size: 0.72rem;
-    background: rgba(124, 184, 124, 0.15);
-    color: var(--accent);
-    font-weight: 600;
-    padding: 0.1rem 0.4rem;
-    border-radius: 4px;
+    font-size: 0.78rem;
+    background: rgba(16, 185, 129, 0.2);
+    color: #059669;
+    font-weight: 800;
+    padding: 0.18rem 0.55rem;
+    border-radius: 6px;
+    border: 1px solid rgba(16, 185, 129, 0.4);
+    letter-spacing: 0.3px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
 }
 
 .racerContainer {

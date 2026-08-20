@@ -39,6 +39,7 @@ export default function RacePage() {
 
     // Standings results array
     const [matchResults, setMatchResults] = useState([]);
+    const [graceSecs, setGraceSecs] = useState(null);
     const [copiedCode, setCopiedCode] = useState(false);
     const [copiedLink, setCopiedLink] = useState(false);
     const [showShareDropdown, setShowShareDropdown] = useState(false);
@@ -50,6 +51,7 @@ export default function RacePage() {
     // 1. Leave room action
     const handleLeaveRoom = useCallback(async () => {
         try {
+            sessionStorage.removeItem('typeflow_active_room');
             emit('leave-room', { roomId });
             await api.post(`/rooms/${roomId}/leave`);
         } catch (err) {
@@ -129,6 +131,7 @@ export default function RacePage() {
                     }
                     setDbRoom(roomData);
                     setRoomStatus(roomData.status);
+                    sessionStorage.setItem('typeflow_active_room', JSON.stringify({ roomId, code: roomData.code }));
                 } else {
                     throw new Error('Room not valid.');
                 }
@@ -162,7 +165,8 @@ export default function RacePage() {
             console.log('[Socket] room-joined:', payload);
             setMembers(payload.members || []);
             setIsSoloMode(!!payload.isSolo);
-            setRoomStatus('LOBBY');
+            setRoomStatus((prev) => (prev === 'COMPLETE' ? prev : 'LOBBY'));
+            setGraceSecs(null);
             setErrorMsg('');
         };
 
@@ -209,8 +213,9 @@ export default function RacePage() {
 
         const handleCountdownCancelled = (payload) => {
             console.log('[Socket] countdown-cancelled:', payload);
-            setRoomStatus('LOBBY');
+            setRoomStatus((prev) => (prev === 'COMPLETE' ? prev : 'LOBBY'));
             setCountdownSecs(null);
+            setGraceSecs(null);
             setErrorMsg(`Countdown reset: ${payload.reason || 'Player left or became unready'}`);
             setTimeout(() => setErrorMsg(''), 4000);
         };
@@ -237,6 +242,7 @@ export default function RacePage() {
             setParagraph(text);
             setParagraphId(payload.paragraphId);
             setCountdownSecs(null);
+            setGraceSecs(null);
             setTypedText('');
             setTotalKeystrokes(0);
             setLocalWpm(0);
@@ -249,7 +255,13 @@ export default function RacePage() {
             setMembers((prev) =>
                 prev.map((m) =>
                     m.userId === payload.userId
-                        ? { ...m, progress: payload.progressPercentage, wpm: payload.currentWpm, accuracy: payload.accuracy ?? m.accuracy }
+                        ? {
+                            ...m,
+                            progress: payload.finished ? 100 : payload.progressPercentage,
+                            wpm: payload.currentWpm,
+                            accuracy: payload.accuracy ?? m.accuracy,
+                            finished: m.finished || !!payload.finished || payload.progressPercentage >= 100
+                          }
                         : m
                 )
             );
@@ -266,9 +278,15 @@ export default function RacePage() {
             );
         };
 
+        const handleRaceGracePeriod = (payload) => {
+            console.log('[Socket] race-grace-period:', payload);
+            setGraceSecs(payload.seconds);
+        };
+
         const handleGameEnd = (payload) => {
             console.log('[Socket] game-end:', payload);
             setRoomStatus('COMPLETE');
+            setGraceSecs(null);
             setMatchResults(payload.results || []);
             if (refetchUser) refetchUser();
         };
@@ -290,15 +308,12 @@ export default function RacePage() {
         on('game-start', handleGameStart);
         on('progress-update', handleProgressUpdate);
         on('player-finished', handlePlayerFinished);
+        on('race-grace-period', handleRaceGracePeriod);
         on('game-end', handleGameEnd);
         on('error', handleSocketError);
 
         return () => {
-            // Cleanly leave room on unmount (e.g. when user clicks Leaderboard or navigates away)
-            if (roomId && emit) {
-                emit('leave-room', { roomId });
-            }
-            // Reset join tracker on unmount/disconnect to enable rejoining on reconnect restoration
+            // Unbind socket handlers on unmount WITHOUT leaving room so user can navigate to Leaderboard/Profile and return
             joinedRef.current = false;
             off('room-joined', handleRoomJoined);
             off('room-mode-updated', handleRoomModeUpdated);
@@ -311,6 +326,7 @@ export default function RacePage() {
             off('game-start', handleGameStart);
             off('progress-update', handleProgressUpdate);
             off('player-finished', handlePlayerFinished);
+            off('race-grace-period', handleRaceGracePeriod);
             off('game-end', handleGameEnd);
             off('error', handleSocketError);
         };
@@ -322,6 +338,23 @@ export default function RacePage() {
             inputRef.current.focus();
         }
     }, [roomStatus]);
+
+    // Grace timer tick
+    useEffect(() => {
+        if (graceSecs === null || graceSecs <= 0) return;
+
+        const interval = setInterval(() => {
+            setGraceSecs((prev) => {
+                if (prev === null || prev <= 1) {
+                    clearInterval(interval);
+                    return 0;
+                }
+                return prev - 1;
+            });
+        }, 1000);
+
+        return () => clearInterval(interval);
+    }, [graceSecs]);
 
     // Live timer tick and metrics updates during RACING status
     useEffect(() => {
@@ -340,10 +373,38 @@ export default function RacePage() {
 
             // Live metrics calculations
             setTypedText((currText) => {
+                const pWords = paragraph.split(' ');
+                const tWords = currText.split(' ');
+                const typedLen = currText.length;
+
                 let correctCount = 0;
-                for (let i = 0; i < currText.length; i++) {
-                    if (currText[i] === paragraph[i]) {
-                        correctCount++;
+                let mistakes = 0;
+
+                for (let w = 0; w < tWords.length; w++) {
+                    if (w >= pWords.length) break;
+
+                    const pWord = pWords[w];
+                    const tWord = tWords[w];
+                    const isCurrentWord = (w === tWords.length - 1 && typedLen < paragraph.length);
+
+                    if (!isCurrentWord) {
+                        if (tWord.toLowerCase() === pWord.toLowerCase()) {
+                            correctCount += pWord.length + (w < pWords.length - 1 ? 1 : 0);
+                        } else {
+                            mistakes += 1;
+                            correctCount += Math.max(0, pWord.length - 1) + (w < pWords.length - 1 ? 1 : 0);
+                        }
+                    } else {
+                        const maxChar = Math.min(tWord.length, pWord.length);
+                        let wordMistake = 0;
+                        for (let c = 0; c < maxChar; c++) {
+                            if (tWord[c].toLowerCase() === pWord[c].toLowerCase()) {
+                                correctCount++;
+                            } else {
+                                wordMistake = 1;
+                            }
+                        }
+                        mistakes += wordMistake;
                     }
                 }
 
@@ -380,24 +441,65 @@ export default function RacePage() {
 
         setTypedText(val);
 
-        // Calculate correct characters count (prefix match)
+        // Word-aligned correct count & mistakes: each mistyped word is only 1 mistake
+        const pWords = paragraph.split(' ');
+        const tWords = val.split(' ');
+        const typedLen = val.length;
+
         let correctCount = 0;
-        for (let i = 0; i < val.length; i++) {
-            if (val[i] === paragraph[i]) {
-                correctCount++;
+        let mistakes = 0;
+
+        for (let w = 0; w < tWords.length; w++) {
+            if (w >= pWords.length) break;
+
+            const pWord = pWords[w];
+            const tWord = tWords[w];
+            const isCurrentWord = (w === tWords.length - 1 && typedLen < paragraph.length);
+
+            if (!isCurrentWord) {
+                if (tWord.toLowerCase() === pWord.toLowerCase()) {
+                    correctCount += pWord.length + (w < pWords.length - 1 ? 1 : 0);
+                } else {
+                    mistakes += 1;
+                    correctCount += Math.max(0, pWord.length - 1) + (w < pWords.length - 1 ? 1 : 0);
+                }
+            } else {
+                const maxChar = Math.min(tWord.length, pWord.length);
+                let wordMistake = 0;
+                for (let c = 0; c < maxChar; c++) {
+                    if (tWord[c].toLowerCase() === pWord[c].toLowerCase()) {
+                        correctCount++;
+                    } else {
+                        wordMistake = 1;
+                    }
+                }
+                mistakes += wordMistake;
             }
         }
 
-        // Update keystrokes ref and accuracy (read/write synchronously, NOT inside a state updater)
-        const nextKeys = Math.max(totalKeystrokes, correctCount);
-        const acc = nextKeys > 0 ? Math.round((correctCount / nextKeys) * 100) : 100;
+        const nextKeys = Math.max(totalKeystrokes, typedLen);
+        const acc = nextKeys > 0 ? Math.max(0, Math.round(((nextKeys - mistakes) / nextKeys) * 100)) : 100;
         setLocalAcc(acc);
+
+        // Finish trigger: player has typed all characters of the paragraph
+        const isFinished = paragraph && val.length >= paragraph.length;
+
+        if (isFinished) {
+            setMembers((prev) =>
+                prev.map((m) =>
+                    m.userId === user?.id
+                        ? { ...m, finished: true, progress: 100 }
+                        : m
+                )
+            );
+        }
 
         // Emit directly — never inside a setState callback
         emit('typing', {
             roomId,
             typedText: val,
             totalKeystrokes: nextKeys,
+            isFinished: !!isFinished
         });
     };
 
@@ -435,7 +537,35 @@ export default function RacePage() {
     const isMeHost = dbRoom?.hostId === user?.id;
     const myMember = members.find((m) => m.userId === user?.id);
     const isMeReady = !!myMember?.isReady;
-    const currentRacerFinished = !!myMember?.finished;
+    const currentRacerFinished = Boolean(paragraph && typedText.length >= paragraph.length);
+
+    // Guaranteed finish transition: if all racers have completed their text, show results immediately
+    const allRacersFinished = members.length > 0 && members.every((m) => {
+        const isCurrentPl = m.userId === user?.id;
+        return Boolean(m.finished || (isCurrentPl && currentRacerFinished));
+    });
+
+    const isMatchComplete = roomStatus === 'COMPLETE' || allRacersFinished;
+
+    const displayResults = (matchResults && matchResults.length > 0)
+        ? matchResults
+        : members
+            .map((m) => {
+                const isCurrentPl = m.userId === user?.id;
+                const rawWpm = isCurrentPl ? (localWpm || m.wpm || 0) : (m.wpm || 0);
+                const rawAcc = isCurrentPl ? (localAcc ?? m.accuracy ?? 100) : (m.accuracy ?? 100);
+                const netWpm = Math.round(rawWpm * (rawAcc / 100));
+                return {
+                    userId: m.userId,
+                    username: m.username,
+                    wpm: rawWpm,
+                    accuracy: rawAcc,
+                    netWpm,
+                    finished: true
+                };
+            })
+            .sort((a, b) => b.netWpm - a.netWpm)
+            .map((r, idx) => ({ ...r, position: idx + 1 }));
 
     // Render Loader
     if (apiLoading) {
@@ -477,11 +607,11 @@ export default function RacePage() {
                 {/* Race header */}
                 <div className={styles.raceHeader}>
                     <div>
-                        <span className={`badge ${roomStatus === 'RACING' ? 'badge-pink' : 'badge-green'} ${styles.liveBadge}`}>
+                        <span className={`badge ${roomStatus === 'RACING' && !isMatchComplete ? 'badge-pink' : 'badge-green'} ${styles.liveBadge}`}>
                             {roomStatus === 'LOBBY' && '🎋 WAITING FOR PLAYERS'}
                             {roomStatus === 'COUNTDOWN' && '⏳ PREPARING...'}
-                            {roomStatus === 'RACING' && '🏁 RACING'}
-                            {roomStatus === 'COMPLETE' && '🥇 COMPLETE'}
+                            {roomStatus === 'RACING' && !isMatchComplete && '🏁 RACING'}
+                            {isMatchComplete && '🥇 COMPLETE'}
                         </span>
                         <h1 className={styles.title} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                             Room Code: <span className="code-font">{dbRoom?.code}</span>
@@ -599,21 +729,39 @@ export default function RacePage() {
                 )}
 
                 {/* ── Active Typing / Race View Screen ── */}
-                {roomStatus === 'RACING' && (
+                {roomStatus === 'RACING' && !isMatchComplete && (
                     <div className={styles.raceLayout}>
+                        {/* Grace period banner if a racer has finished */}
+                        {graceSecs !== null && (
+                            <div style={{
+                                gridColumn: '1 / -1',
+                                padding: '0.85rem 1.25rem',
+                                background: 'linear-gradient(135deg, rgba(245,158,11,0.15), rgba(217,119,6,0.08))',
+                                border: '1px solid rgba(245,158,11,0.4)',
+                                borderRadius: '12px',
+                                color: '#b45309',
+                                fontWeight: 700,
+                                textAlign: 'center',
+                                fontSize: '0.95rem'
+                            }}>
+                                ⏳ First racer finished! Race ending in <strong>{graceSecs}s</strong>... Finish up your text!
+                            </div>
+                        )}
+
                         {/* Competitor Standings / Progress Bars */}
                         <div className={`card ${styles.progressCard}`}>
                             <h2 className={styles.sectionLabel}>Competitors Progress</h2>
                             <div className={styles.racerContainer}>
                                 {members.map((m) => {
                                     const isCurrentPl = m.userId === user?.id;
+                                    const isPlFinished = m.finished || (isCurrentPl && currentRacerFinished);
                                     return (
                                         <div key={m.userId} className={styles.racer}>
                                             <div className={styles.racerMeta}>
                                                 <span className={styles.racerName}>
                                                     {isCurrentPl ? '🐼 ' : ''}{m.username}
                                                     {isCurrentPl && <span className={`badge badge-green ${styles.youBadge}`}>You</span>}
-                                                    {m.finished && <span className={styles.finishedMarker}>✓ Finished</span>}
+                                                    {isPlFinished && <span className={styles.finishedMarker}>✓ Finished</span>}
                                                 </span>
                                                 <span className={styles.racerWpm}>
                                                     {m.wpm > 0 ? `${m.wpm} WPM` : '0 WPM'} • {m.accuracy ?? 100}% ACC
@@ -622,9 +770,9 @@ export default function RacePage() {
                                             <div className={styles.bar}>
                                                 <div
                                                     className={styles.barFill}
-                                                    style={{ width: `${m.progress || 0}%` }}
+                                                    style={{ width: `${isPlFinished ? 100 : (m.progress || 0)}%` }}
                                                 />
-                                                <span className={styles.panda} style={{ left: `${m.progress || 0}%` }}>🐼</span>
+                                                <span className={styles.panda} style={{ left: `${isPlFinished ? 100 : (m.progress || 0)}%` }}>🐼</span>
                                             </div>
                                         </div>
                                     );
@@ -642,13 +790,30 @@ export default function RacePage() {
                                 ref={inputRef}
                                 id="race-input"
                                 className={`input-field ${styles.typingInput}`}
-                                placeholder={currentRacerFinished ? "You finished! Waiting for other racers..." : "Type the text exactly as shown..."}
+                                placeholder={currentRacerFinished ? "You finished! Waiting for other racers..." : "Type the text as shown..."}
                                 rows={3}
                                 value={typedText}
                                 onChange={handleInputChange}
                                 onKeyDown={handleInputKeyDown}
                                 disabled={currentRacerFinished}
                             />
+
+                            {currentRacerFinished && (
+                                <div style={{
+                                    marginTop: '0.75rem',
+                                    marginBottom: '0.75rem',
+                                    padding: '0.75rem 1rem',
+                                    background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(5, 150, 105, 0.08))',
+                                    border: '1px solid rgba(16, 185, 129, 0.4)',
+                                    borderRadius: '10px',
+                                    color: '#047857',
+                                    fontWeight: 700,
+                                    textAlign: 'center',
+                                    fontSize: '0.95rem'
+                                }}>
+                                    ✓ Finished! You have completed the race. Waiting for other racers...
+                                </div>
+                            )}
 
                             <div className={styles.typingFooter}>
                                 <span className={styles.timer}>
@@ -664,13 +829,38 @@ export default function RacePage() {
                 )}
 
                 {/* ── Game End Standings / Leaderboard persistence screen ── */}
-                {roomStatus === 'COMPLETE' && (
+                {isMatchComplete && (
                     <div className={styles.completeLayout}>
-                        <div className={`card ${styles.resultsCard}`}>
+                        <div className={`card ${styles.resultsCard}`} style={{ position: 'relative' }}>
+                            <button
+                                onClick={handleLeaveRoom}
+                                title="Close result and leave room"
+                                aria-label="Close and Leave Room"
+                                style={{
+                                    position: 'absolute',
+                                    top: '1.25rem',
+                                    right: '1.25rem',
+                                    background: 'var(--bg-hover, #f1f5f9)',
+                                    border: '1px solid var(--border, #cbd5e1)',
+                                    borderRadius: '50%',
+                                    width: '36px',
+                                    height: '36px',
+                                    fontSize: '1.1rem',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    color: 'var(--text-secondary, #64748b)',
+                                    transition: 'all 0.2s ease'
+                                }}
+                            >
+                                ✕
+                            </button>
+
                             <div className={styles.resultsHeader}>
                                 <span className={styles.trophy}>🏆</span>
                                 <h2>Match Completed!</h2>
-                                <p>Persistent results are stored. Here is the leaderboard:</p>
+                                <p>Standings ranked by Net WPM (Speed + Accuracy):</p>
                             </div>
 
                             <table className={styles.resultsTable}>
@@ -678,18 +868,20 @@ export default function RacePage() {
                                     <tr>
                                         <th>Rank</th>
                                         <th>Competitor</th>
-                                        <th>Speed (WPM)</th>
+                                        <th>Net Speed</th>
                                         <th>Accuracy</th>
                                         <th>XP Added</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {matchResults.map((r) => {
+                                    {displayResults.map((r) => {
                                         const isCurrentPl = r.userId === user?.id;
+                                        const netWpm = r.netWpm !== undefined ? r.netWpm : Math.round((r.wpm || 0) * ((r.accuracy || 0) / 100));
                                         const baseXP = 20;
                                         const winnerXP = r.position === 1 ? 50 : 0;
-                                        const speedXP = Math.floor(r.wpm / 5);
-                                        const xpGained = baseXP + winnerXP + speedXP;
+                                        const speedXP = Math.floor((r.wpm || 0) / 5);
+                                        const accuracyXP = (r.accuracy || 0) >= 100 ? 15 : (r.accuracy || 0) >= 90 ? 10 : 0;
+                                        const xpGained = baseXP + winnerXP + speedXP + accuracyXP;
 
                                         return (
                                             <tr key={r.userId} className={isCurrentPl ? styles.highlightRow : ''}>
@@ -698,9 +890,23 @@ export default function RacePage() {
                                                 </td>
                                                 <td>
                                                     {r.username} {isCurrentPl && <span className={styles.tableYouTag}>(You)</span>}
+                                                    {r.accuracy >= 100 && (
+                                                        <span style={{ fontSize: '0.75rem', marginLeft: '6px', color: '#10b981', fontWeight: 600 }}>
+                                                            🎯 Perfect Acc
+                                                        </span>
+                                                    )}
                                                 </td>
-                                                <td className="code-font">{r.wpm} WPM</td>
-                                                <td>{r.accuracy}%</td>
+                                                <td className="code-font">
+                                                    <strong>{netWpm} WPM</strong>
+                                                    <span style={{ fontSize: '0.78rem', color: '#64748b', display: 'block' }}>
+                                                        ({r.wpm} Raw WPM)
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <span style={{ fontWeight: 600, color: r.accuracy >= 95 ? '#059669' : r.accuracy >= 80 ? '#d97706' : '#dc2626' }}>
+                                                        {r.accuracy}%
+                                                    </span>
+                                                </td>
                                                 <td className={styles.xpText}>+{xpGained} XP 🎋</td>
                                             </tr>
                                         );
@@ -708,12 +914,18 @@ export default function RacePage() {
                                 </tbody>
                             </table>
 
-                            <div className={styles.resultsActions}>
+                            <div className={styles.resultsActions} style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
                                 <button
-                                    onClick={() => navigate('/dashboard')}
+                                    onClick={() => setRoomStatus('LOBBY')}
                                     className="btn btn-primary"
                                 >
-                                    Return to Dashboard
+                                    🎋 Back to Lobby
+                                </button>
+                                <button
+                                    onClick={handleLeaveRoom}
+                                    className="btn btn-ghost"
+                                >
+                                    Leave Room
                                 </button>
                             </div>
                         </div>
@@ -723,3 +935,6 @@ export default function RacePage() {
         </div>
     );
 }
+
+
+

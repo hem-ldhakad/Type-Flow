@@ -1,7 +1,7 @@
 // In-memory socket room state — separate from the Prisma DB room records.
 // Tracks live socket connections, ready states and countdown timers.
 
-// roomId → { hostId, code, members: Map<userId, MemberState>, status, countdownTimer }
+// roomId → { hostId, code, members: Map<userId, MemberState>, status, countdownTimer, finishGraceTimer, maxRaceTimer }
 const rooms = new Map();
 
 // socketId → roomId  (reverse index)
@@ -16,6 +16,8 @@ export const createSocketRoom = (roomId, hostId, code) => {
         members: new Map(),
         status: 'LOBBY',
         countdownTimer: null,
+        finishGraceTimer: null,
+        maxRaceTimer: null,
         paragraphText: '',
         matchStartedAt: null,
         paragraphId: null
@@ -34,6 +36,8 @@ export const deleteRoom = (roomId) => {
             socketRoomIndex.delete(member.socketId);
         }
         if (room.countdownTimer) clearInterval(room.countdownTimer);
+        if (room.finishGraceTimer) clearInterval(room.finishGraceTimer);
+        if (room.maxRaceTimer) clearInterval(room.maxRaceTimer);
         rooms.delete(roomId);
     }
 };
@@ -120,6 +124,32 @@ export const clearCountdown = (roomId) => {
     }
 };
 
+export const setFinishGraceTimer = (roomId, timer) => {
+    const room = rooms.get(roomId);
+    if (room) room.finishGraceTimer = timer;
+};
+
+export const clearFinishGraceTimer = (roomId) => {
+    const room = rooms.get(roomId);
+    if (room && room.finishGraceTimer) {
+        clearInterval(room.finishGraceTimer);
+        room.finishGraceTimer = null;
+    }
+};
+
+export const setMaxRaceTimer = (roomId, timer) => {
+    const room = rooms.get(roomId);
+    if (room) room.maxRaceTimer = timer;
+};
+
+export const clearMaxRaceTimer = (roomId) => {
+    const room = rooms.get(roomId);
+    if (room && room.maxRaceTimer) {
+        clearInterval(room.maxRaceTimer);
+        room.maxRaceTimer = null;
+    }
+};
+
 // ── Reverse lookup ─────────────────────────────────────────────────────────────
 
 export const getRoomBySocketId = (socketId) => {
@@ -164,6 +194,9 @@ export const startRace = (roomId, paragraphId, paragraphText) => {
     const room = rooms.get(roomId);
     if (!room) return;
 
+    clearFinishGraceTimer(roomId);
+    clearMaxRaceTimer(roomId);
+
     room.status = 'RACING';
     room.paragraphId = paragraphId;
     room.paragraphText = paragraphText;
@@ -180,7 +213,7 @@ export const startRace = (roomId, paragraphId, paragraphText) => {
     }
 };
 
-export const updatePlayerProgress = (roomId, userId, typedText, totalKeystrokes) => {
+export const updatePlayerProgress = (roomId, userId, typedText, totalKeystrokes, isFinishedExplicit = false) => {
     const room = rooms.get(roomId);
     if (!room || room.status !== 'RACING') return null;
 
@@ -189,33 +222,61 @@ export const updatePlayerProgress = (roomId, userId, typedText, totalKeystrokes)
 
     const paragraph = room.paragraphText;
     const paragraphLen = paragraph.length;
-
-    // Count total correct characters matching paragraph at that index
-    let correctLength = 0;
     const typedLen = typedText.length;
-    const maxMatch = Math.min(typedLen, paragraphLen);
 
-    for (let i = 0; i < maxMatch; i++) {
-        // Compare case-insensitively to prevent progress failures during client/server deployment mismatch
-        if (typedText[i].toLowerCase() === paragraph[i].toLowerCase()) {
-            correctLength++;
+    // Word-aligned matching: each mistyped word counts as only 1 mistake
+    const pWords = paragraph.split(' ').filter(Boolean);
+    const tWords = typedText.split(' ').filter(Boolean);
+
+    let correctLength = 0;
+    let mistakes = 0;
+
+    for (let w = 0; w < tWords.length; w++) {
+        if (w >= pWords.length) break;
+
+        const pWord = pWords[w];
+        const tWord = tWords[w];
+        const isCurrentWord = (w === tWords.length - 1 && typedLen < paragraphLen && !isFinishedExplicit);
+
+        if (!isCurrentWord) {
+            // Completed word
+            if (tWord.toLowerCase() === pWord.toLowerCase()) {
+                correctLength += pWord.length + (w < pWords.length - 1 ? 1 : 0);
+            } else {
+                // Word has typo(s) — ONLY ONE MISTAKE is considered for this word!
+                mistakes += 1;
+                correctLength += Math.max(0, pWord.length - 1) + (w < pWords.length - 1 ? 1 : 0);
+            }
+        } else {
+            // Word currently in progress
+            const maxChar = Math.min(tWord.length, pWord.length);
+            let wordMistake = 0;
+            for (let c = 0; c < maxChar; c++) {
+                if (tWord[c].toLowerCase() === pWord[c].toLowerCase()) {
+                    correctLength++;
+                } else {
+                    wordMistake = 1;
+                }
+            }
+            mistakes += wordMistake;
         }
     }
 
-    // Prevent impossible keystroke entries (total must be >= correct length)
-    const keystrokes = Math.max(totalKeystrokes || 0, correctLength);
+    // Prevent impossible keystroke entries
+    const keystrokes = Math.max(totalKeystrokes || 0, typedLen);
     const elapsed = (Date.now() - room.matchStartedAt) / 1000;
     const wpm = elapsed > 0.5 ? Math.round((correctLength / 5) / (elapsed / 60)) : 0;
-    const accuracy = keystrokes > 0 ? Math.round((correctLength / keystrokes) * 100) : 100;
-    const progress = Math.round((typedLen / paragraphLen) * 100);
+    const accuracy = keystrokes > 0 ? Math.max(0, Math.round(((keystrokes - mistakes) / keystrokes) * 100)) : 100;
+    const progress = Math.min(100, Math.round((typedLen / paragraphLen) * 100));
 
     // Save to active socket user cache record
     member.progress = progress;
     member.wpm = wpm;
     member.accuracy = accuracy;
     member.totalKeystrokes = keystrokes;
+    member.mistakes = mistakes;
 
-    console.log(`[Socket][DEBUG] Player ${member.username} stats: typedLen=${typedLen}, correct=${correctLength}, progress=${progress}%, WPM=${wpm}`);
+    console.log(`[Socket][DEBUG] Player ${member.username} stats: typedLen=${typedLen}/${paragraphLen}, words=${tWords.length}/${pWords.length}, mistakes=${mistakes}, progress=${progress}%, WPM=${wpm}, isFinished=${isFinishedExplicit}`);
 
     const secondIndex = Math.max(1, Math.floor(elapsed));
     if (!member.wpmHistory) member.wpmHistory = [0];
@@ -223,16 +284,20 @@ export const updatePlayerProgress = (roomId, userId, typedText, totalKeystrokes)
         member.wpmHistory.push(wpm);
     }
 
-    if (typedLen >= paragraphLen) {
+    // Finish condition: Player has typed all characters of the paragraph or explicit finish
+    const isCompleted = isFinishedExplicit || typedLen >= paragraphLen;
+
+    if (isCompleted) {
         member.finished = true;
         member.finishedAt = Date.now();
+        member.progress = 100;
         member.wpmHistory[secondIndex] = wpm; // ensure final WPM is correct
     }
 
     return {
         userId,
         username: member.username,
-        progress,
+        progress: member.progress,
         wpm,
         accuracy,
         finished: member.finished,
@@ -240,13 +305,34 @@ export const updatePlayerProgress = (roomId, userId, typedText, totalKeystrokes)
     };
 };
 
-export const allFinished = (roomId) => {
+export const hasAnyFinished = (roomId) => {
     const room = rooms.get(roomId);
     if (!room) return false;
+    for (const [, m] of room.members) {
+        if (m.finished) return true;
+    }
+    return false;
+};
+
+export const allFinished = (roomId) => {
+    const room = rooms.get(roomId);
+    if (!room || room.members.size < 1) return false;
     for (const [, m] of room.members) {
         if (!m.finished) return false;
     }
     return true;
+};
+
+export const forceFinishAll = (roomId) => {
+    const room = rooms.get(roomId);
+    if (!room) return;
+    const now = Date.now();
+    for (const [, m] of room.members) {
+        if (!m.finished) {
+            m.finished = true;
+            m.finishedAt = now;
+        }
+    }
 };
 
 export const getRaceResults = (roomId) => {
@@ -268,22 +354,23 @@ export const getRaceResults = (roomId) => {
     }
 
     results.sort((a, b) => {
+        // Priority 1: Finished racers above non-finished racers
         if (a.finished !== b.finished) return a.finished ? -1 : 1;
 
-        // Calculate Net WPM (WPM * Accuracy %) to factor accuracy directly into rank
+        // Priority 2: Net WPM (WPM * (Accuracy %)) combines speed & accuracy for ultimate skill rank
         const netWpmA = (a.wpm || 0) * ((a.accuracy || 0) / 100);
         const netWpmB = (b.wpm || 0) * ((b.accuracy || 0) / 100);
 
         if (Math.abs(netWpmB - netWpmA) > 0.5) {
-            return netWpmB - netWpmA; // Higher Net WPM (Speed + Accuracy) wins
+            return netWpmB - netWpmA; // Higher Net WPM wins
         }
 
-        // Tie-breaker 1: Accuracy
+        // Priority 3: Tie-breaker - Accuracy %
         if (a.accuracy !== b.accuracy) {
             return b.accuracy - a.accuracy; // Higher accuracy wins
         }
 
-        // Tie-breaker 2: Finished time / Progress
+        // Priority 4: Tie-breaker - Finish time / Progress
         if (a.finished) {
             return a.finishedAt - b.finishedAt;
         }
@@ -296,3 +383,4 @@ export const getRaceResults = (roomId) => {
         position: index + 1
     }));
 };
+
